@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block bodydoc %}
+
+<div id="content container-fluid ">
+
+    <div class="row">
+        <div class="col">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addservermodal">Add new server</button>
+        </div>
+    </div>
+    
+    <div class="row">
+        
+        {% for server in server_list %}
+
+        <div class="card col-2" style="width: 18rem">
+            <div class="card-body">
+                <h5 class="card-title">
+                    {{ server.name }}
+                </h5>
+                <p class="card-text">
+                    {{ server.url }}
+                </p>
+                <button class="btn btn-primary" onclick="generateCode()">Generate Invite Code</button>
+            </div>
+        </div>
+
+        {% endfor %}
+    </div>
+
+
+</div>
+    
+<div id="addservermodal" class="modal fade" tabindex="-1" aria-labelledby="addservermodallabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="addservermodallabel">Add New Server</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-server-form" action="{% url 'server_list' %}" method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="server-name" class="col-form-label">Server Name:</label>
+                        <input type="text" class="form-control" id="server-name" name="server-name">    
+                    </div>
+                    <div class="mb-3">
+                        <label for="server-address" class="col-form-label">Server Address:</label>
+                        <input type="text" class="form-control" id="server-address" name="server-address">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary" form onclick="addNewServer()">Add Server</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function generateCode(){
+        alert("code has been triggered!")
+    }
+
+    function addNewServer(){
+        const form_obj = document.getElementById("add-server-form");
+        form_obj.submit();
+
+        alert("new server has been created yay!")
+    }
+</script>
+
+{% endblock %}

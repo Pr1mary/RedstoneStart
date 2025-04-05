@@ -23,12 +23,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-47q%hp0^yj)=e8(y%l_fus7$@n(1wy^%9ycu5eir=93f%ry3(5'
+SECRET_KEY = os.getenv("DJANGO_SECRET")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+if os.getenv("MODE","").upper() == "DEV":
+    DEBUG = True
+else:
+    DEBUG = False
 
-ALLOWED_HOSTS = []
+if os.getenv("ALLOWED_HOST_LIST", ""):
+    ALLOWED_HOSTS = os.getenv("ALLOWED_HOST_LIST", "").split(",")
+else:
+    ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -40,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'webapp',
 ]
 
 MIDDLEWARE = [
@@ -57,7 +64,9 @@ ROOT_URLCONF = 'mcplayer_manager.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            BASE_DIR.joinpath("webapp")
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -68,6 +77,10 @@ TEMPLATES = [
             ],
         },
     },
+]
+
+STATICFILES_DIRS = [
+    BASE_DIR.joinpath("webapp").joinpath("static")
 ]
 
 WSGI_APPLICATION = 'mcplayer_manager.wsgi.application'

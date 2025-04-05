@@ -1,0 +1,11 @@
+ 
+body {
+    font-family: sans-serif;
+    overflow-x: hidden;
+    /* background: #fafafa; */
+}
+
+#sidebar {
+    padding-left: 1vh;
+    height: 100vh;
+}
