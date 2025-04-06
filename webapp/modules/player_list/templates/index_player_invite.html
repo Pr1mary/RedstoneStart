@@ -1,0 +1,37 @@
+{% extends 'base_clean.html' %}
+
+{% block bodydoc %}
+
+<div id="content container ">
+
+    <div class="card" style="width: 18rem; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
+        <div class="card-header">
+            <strong>Server Invite Request</strong>
+        </div>
+        <div class="card-body">
+            <form id="player_join_server" action="{% url 'player_join_server' %}" method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="player-name" class="col-form-label">Player Name:</label>
+                    <input type="text" class="form-control" id="player-name" name="player-name" required>    
+                </div>
+                <div class="mb-3">
+                    <label for="invite-code" class="col-form-label">Invite Code:</label>
+                    <input type="text" class="form-control" id="invite-code" name="invite-code" required {% if invite_code %} value="{{ invite_code }}" {% endif %}>
+                </div>
+                <div class="mb-3">
+                    <input type="submit" class="btn btn-primary">
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    $("#player_join_server").submit(event => {
+        alert("Join request has been sent!")
+    });
+</script>
+
+{% endblock %}

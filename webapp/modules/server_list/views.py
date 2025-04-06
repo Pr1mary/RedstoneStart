@@ -76,7 +76,7 @@ class ServerManagerDetailView(View):
             resp_data["name"] = server_details.server_name
             resp_data["url"] = server_details.server_url
             resp_data["active"] = server_details.is_active
-            resp_data["players"] = 0
+            resp_data["players"] = server_details.player_server_map.all().count() if server_details.player_server_map else 0
 
             return JsonResponse(resp_data)
 
