@@ -5,6 +5,8 @@ class ServerList(models.Model):
 
     server_url = models.CharField(max_length=255)
     server_name = models.CharField(max_length=255, null=True, blank=True)
+    server_invite_code = models.CharField(max_length=255, null=True, blank=True)
+    server_expired_at = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

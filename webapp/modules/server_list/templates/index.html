@@ -19,7 +19,11 @@
                     <a href="{{ server.url }}">{{ server.url }}</a>
                 </p>
                 <div class="d-grip gap-2 d-md-block">
-                    <button class="btn btn-primary" onclick="generateCode()">Invite Code</button>
+                    {% if server.invite_code %}
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#serverinvitemodal" data-bs-invite-code="{{ server.invite_code }}" data-bs-server-url="{% url 'server_invite' server.id %}">Invite Details</button>
+                    {% else %}
+                        <button class="btn btn-success" onclick="generateCode('{% url 'server_invite' server.id %}')">Open Invite</button>
+                    {% endif %}
                     <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#detailservermodal" data-bs-server-url="{% url 'server_details' server.id %}">Server Details</button>
                 </div>
             </div>
@@ -87,21 +91,126 @@
     </div>
 </div>
 
+<div id="serverinvitemodal" class="modal fade" tabindex="-1" aria-labelledby="serverinvitemodallabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="serverinvitemodallabel">Current Server Details</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="invite-code" class="col-form-label">Invite Code:</label>
+                    <input type="text" class="form-control" id="invite-code-details" name="invite-code" disabled>    
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" id="close-invite-btn" onclick="closeInvite()">Close Invitation</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     $("document").ready(() => {
         const detail_modal = $("#detailservermodal")
         detail_modal.on("show.bs.modal", detailServer);
+
+        
+        const invite_modal = $("#serverinvitemodal")
+        invite_modal.on("show.bs.modal", inviteDetail);
     });
 
-    function generateCode(){
-        alert("code has been triggered!")
+    function generateCode(server_path){
+        const generate_invite_code_url = server_path;
+        const confirm_text = "Start invite mode?"
+        const csrf_token = getcsrftoken();
+
+        if(!confirm(confirm_text)){
+            return;
+        }
+
+        const headers = {
+            "X-CSRFToken": csrf_token
+        }
+        const body_data = {
+            "code_len": 10,
+        }
+        const done = $.ajax({
+            "url": generate_invite_code_url,
+            "method": "put",
+            "headers": headers,
+            "contentType": "application/json; charset=utf-8",
+            "data": JSON.stringify(body_data),
+        }).done(data => {
+            // abort of failed from server
+            if(!data.invite_code){
+                alert("Error: failed to generate invite code from server")
+                return
+            }
+            
+            // refresh page after delete success
+            alert("Invite mode started")
+            location.reload()
+        }).fail(() => {
+            alert("Error: failed to generate invite code from server")
+        })
     }
 
     function addNewServer(){
         const form_obj = $("#add-server-form");
         form_obj.submit();
 
-        alert("new server has been created yay!")
+        alert("New server has been added!")
+    }
+
+    function inviteDetail(event) {
+        const server_url = event.relatedTarget.getAttribute('data-bs-server-url');
+        const invite_code = event.relatedTarget.getAttribute('data-bs-invite-code');
+        const close_invitation_btn = $("#close-invite-btn")
+
+        const server_name_form = $("#invite-code-details");
+        server_name_form.val(invite_code);
+
+        close_invitation_btn.data("data-bs-server-url", server_url);
+    }
+
+    function closeInvite() {
+        const delete_invite_code_url = $("#close-invite-btn").data("data-bs-server-url");
+        const confirm_text = "Are you sure do you want to close the invitation?";
+        const csrf_token = getcsrftoken();
+        
+        if(!confirm(confirm_text)){
+            return;
+        }
+
+        const headers = {
+            "X-CSRFToken": csrf_token
+        }
+        const body_data = {
+            "code_len": 10,
+            "close_invite": true
+        }
+        const done = $.ajax({
+            "url": delete_invite_code_url,
+            "method": "put",
+            "headers": headers,
+            "contentType": "application/json; charset=utf-8",
+            "data": JSON.stringify(body_data),
+        }).done(data => {
+            // abort of failed from server
+            if(!data.invite_closed){
+                alert("Error: failed to close invitation from server")
+                return
+            }
+            
+            // refresh page after delete success
+            alert("Invitation closed!")
+            location.reload()
+        }).fail(() => {
+            alert("Error: failed to close invitation from server")
+        })
     }
 
     async function detailServer(event) {
@@ -135,22 +244,8 @@
     function deleteServer(){
         const delete_server_url = $("#delete-server-btn").data("data-bs-server-url");
         const confirm_text = "Are you sure do you want to delete this server?";
-        const cookies = document.cookie.split(";");
-
-        let csrf_token = "";
-        for(let cookie of cookies){
-            cookie = cookie.trim();
-            const cookie_key = cookie.split("=")[0];
-            const cookie_val = cookie.split("=")[1];
-
-            if(cookie_key == "csrftoken"){
-                csrf_token = cookie_val
-                break
-            }
-
-        }
+        const csrf_token = getcsrftoken();
         
-        console.log(csrf_token)
         if(!confirm(confirm_text)){
             return;
         }
@@ -174,6 +269,25 @@
         }).fail(() => {
             alert("Error: failed to delete server")
         })
+    }
+
+    function getcsrftoken(){
+        const cookies = document.cookie.split(";");
+
+        let csrf_token = "";
+        for(let cookie of cookies){
+            cookie = cookie.trim();
+            const cookie_key = cookie.split("=")[0];
+            const cookie_val = cookie.split("=")[1];
+
+            if(cookie_key == "csrftoken"){
+                csrf_token = cookie_val
+                break
+            }
+
+        }
+
+        return csrf_token;
     }
 </script>
 
