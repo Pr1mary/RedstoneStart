@@ -3,14 +3,17 @@ from django.http import HttpResponse, JsonResponse, HttpRequest, HttpResponseRed
 from django.views.generic import View
 from .models import PlayerList, PlayerServerMap, ServerList
 from django.db.models import Q
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
 
 import random, string, json
 
-class PlayerManagerView(View):
+class PlayerManagerView(LoginRequiredMixin, View):
     template = "modules/player_list/templates/index.html"
     ctx = {
         "page_title": "player_manager"
     }
+    login_url = "/accounts/auth/login"
 
     def get(self, request: HttpRequest, *args, **kwargs):
 

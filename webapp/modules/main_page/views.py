@@ -8,8 +8,8 @@ class MainPageView(View):
 
     def get(self, request: HttpRequest, *args, **kwargs):
 
-        anonym_page_path = "player_join_server"
-        logedin_page_path = "server_list"
+        anonym_page_path = "auth_login"
+        logedin_page_path = "player_list"
 
         if request.user.is_authenticated:
             target_redirect = logedin_page_path

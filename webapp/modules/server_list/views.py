@@ -2,14 +2,16 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse, HttpRequest, HttpResponseRedirect
 from django.views.generic import View
 from .models import ServerList
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 import random, string, json
 
-class ServerManagerView(View):
+class ServerManagerView(LoginRequiredMixin, View):
     template = "modules/server_list/templates/index.html"
     ctx = {
         "page_title": "server_manager"
     }
+    login_url = "/accounts/auth/login"
 
     def get(self, request: HttpRequest, *args, **kwargs):
 
