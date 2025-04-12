@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block bodydoc %}
+
+<div id="content">
+
+    {% if server_list %}
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs">
+                    {% for server in server_list %}
+                        <li class="nav-item">
+                            <a href="/playermanager/?server_id={{server.id}}" class="nav-link {% if server.active %} active {% endif %}">
+                                {{ server.name }}
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-end">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addplayermodal">
+                        <span class="mdi mdi-plus-circle-outline"> Add Player
+                    </button>    
+                </div>
+                <table class="table table-hover">
+                    <thead>
+                        <th>Player Name</th>
+                        <th>Join Date</th>
+                        <th>Status</th>
+                        <th></th>
+                    </thead>
+                    <tbody>
+                        {% for player in player_list %}
+                        <tr>
+                            <td class="">{{ player.name }}</td>
+                            <td>{{ player.joined_at }}</td>
+                            <td><span class="badge text-bg-success">Online</span></td>
+                            <!-- <td><span class="badge text-bg-danger">Offline</span></td> -->
+                            <td>
+                                <button class="btn btn-outline-primary"
+                                data-bs-toggle="modal" data-bs-target="#detailplayermodal"
+                                data-bs-player-url="{% url 'player_details' player.id %}">
+                                    Details
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if not player_list %}
+                <div class="container text-center">
+                    <br>
+                    <p>
+                        Data Empty
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <div class="d-flex justify-content-center">
+            <p>No server found, <a href="{% url 'server_list' %}" class="link-primary">click here to add new server</a></p>
+        </div>
+    {% endif %}
+
+</div>
+
+<div id="addplayermodal" class="modal fade" tabindex="-1" aria-labelledby="addplayermodallabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="addplayermodallabel">Add Player</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{% url 'player_list' %}" method="post" id="add-player-form">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="player-name" class="col-form-label">Player Name:</label>
+                        <input type="text" class="form-control" id="player-name-add" name="player-name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="server-target" class="col-form-label">Server Name:</label>
+                        <select class="form-select" name="server-target" id="server-target-add" required>
+                            {% for server in server_list%}
+                                <option value="{{ server.id }}" {% if server.active %} selected {% endif %}>
+                                    {{ server.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-success" id="add-player-btn" form="add-player-form">Add Player</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="detailplayermodal" class="modal fade" tabindex="-1" aria-labelledby="detailplayermodallabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="detailplayermodallabel">Player Details</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="player-name" class="col-form-label">Player Name:</label>
+                    <input type="text" class="form-control" id="player-name-edit" name="player-name" disabled>    
+                </div>
+                <div class="mb-3">
+                    <label for="join-date" class="col-form-label">Joined Since:</label>
+                    <input type="text" class="form-control" id="join-date-edit" name="join-date" disabled>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" id="delete-player-btn" onclick="deletePlayer()">Remove Player</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $("document").ready(() => {
+        const detail_modal = $("#detailplayermodal")
+        detail_modal.on("show.bs.modal", detailPlayer);
+
+    });
+
+    async function detailPlayer(event) {
+        const player_url = event.relatedTarget.getAttribute('data-bs-player-url');
+        const delete_player_btn = $("#delete-player-btn")
+
+        try{
+            const resp = await fetch(player_url);
+            if (!resp.ok) {
+                throw new Error(`Resp status: ${resp.status}`);
+            }
+
+            const resp_data = await resp.json();
+
+            const player_name_form = $("#player-name-edit");
+            player_name_form.val(resp_data["name"]);
+
+            const join_date_form = $("#join-date-edit");
+            join_date_form.val(resp_data["created_at"]);
+
+            delete_player_btn.data("data-bs-player-url", player_url);
+
+        }catch(err){
+            console.log(err.message);
+        }
+    }
+
+    function deletePlayer(){
+        const delete_server_url = $("#delete-player-btn").data("data-bs-player-url");
+        const confirm_text = "Are you sure do you want to remove this player from this server?";
+        const csrf_token = getcsrftoken();
+        
+        if(!confirm(confirm_text)){
+            return;
+        }
+
+        const headers = {
+            "X-CSRFToken": csrf_token
+        }
+        const done = $.ajax({
+            "url": delete_server_url,
+            "method": "DELETE",
+            "headers": headers
+        }).done(data => {
+            // abort of failed from server
+            if(!data.deleted){
+                alert("Error: failed to delete server")
+                return
+            }
+            
+            // refresh page after delete success
+            location.reload()
+        }).fail(() => {
+            alert("Error: failed to delete server")
+        })
+    }
+
+    function getcsrftoken(){
+        const cookies = document.cookie.split(";");
+
+        let csrf_token = "";
+        for(let cookie of cookies){
+            cookie = cookie.trim();
+            const cookie_key = cookie.split("=")[0];
+            const cookie_val = cookie.split("=")[1];
+
+            if(cookie_key == "csrftoken"){
+                csrf_token = cookie_val
+                break
+            }
+
+        }
+
+        return csrf_token;
+    }
+</script>
+
+{% endblock %}

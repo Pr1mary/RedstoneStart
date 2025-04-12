@@ -1,0 +1,22 @@
+
+<nav id="sidebar">
+
+    <ul class="nav nav-justified nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link {% if page_title == 'dasboard'%} active {% endif %} disabled" href="#">
+                Dashboard
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if page_title == 'player_manager'%} active {% endif %}" href="/playermanager">
+                Player List
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if page_title == 'server_manager'%} active {% endif %}" href="/servermanager">
+                Server List
+            </a>
+        </li>
+    </ul>
+
+</nav>
