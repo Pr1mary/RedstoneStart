@@ -4,59 +4,65 @@
 
 <div id="content">
 
-    <div class="card">
-        <div class="card-header">
-            <ul class="nav nav-tabs card-header-tabs">
-                {% for server in server_list %}
-                    <li class="nav-item">
-                        <a href="/playermanager/?server_id={{server.id}}" class="nav-link {% if server.active %} active {% endif %}">
-                            {{ server.name }}
-                        </a>
-                    </li>
-                {% endfor %}
-            </ul>
-        </div>
-        <div class="card-body">
-            <div class="d-flex justify-content-end">
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addplayermodal">
-                    <span class="mdi mdi-plus-circle-outline"> Add Player
-                </button>    
-            </div>
-            <table class="table table-hover">
-                <thead>
-                    <th>Player Name</th>
-                    <th>Join Date</th>
-                    <th>Status</th>
-                    <th></th>
-                </thead>
-                <tbody>
-                    {% for player in player_list %}
-                    <tr>
-                        <td class="">{{ player.name }}</td>
-                        <td>{{ player.joined_at }}</td>
-                        <td><span class="badge text-bg-success">Online</span></td>
-                        <!-- <td><span class="badge text-bg-danger">Offline</span></td> -->
-                        <td>
-                            <button class="btn btn-outline-primary"
-                            data-bs-toggle="modal" data-bs-target="#detailplayermodal"
-                            data-bs-player-url="{% url 'player_details' player.id %}">
-                                Details
-                            </button>
-                        </td>
-                    </tr>
+    {% if server_list %}
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs">
+                    {% for server in server_list %}
+                        <li class="nav-item">
+                            <a href="/playermanager/?server_id={{server.id}}" class="nav-link {% if server.active %} active {% endif %}">
+                                {{ server.name }}
+                            </a>
+                        </li>
                     {% endfor %}
-                </tbody>
-            </table>
-            {% if not player_list %}
-            <div class="container text-center">
-                <br>
-                <p>
-                    Data Empty
-                </p>
+                </ul>
             </div>
-            {% endif %}
+            <div class="card-body">
+                <div class="d-flex justify-content-end">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addplayermodal">
+                        <span class="mdi mdi-plus-circle-outline"> Add Player
+                    </button>    
+                </div>
+                <table class="table table-hover">
+                    <thead>
+                        <th>Player Name</th>
+                        <th>Join Date</th>
+                        <th>Status</th>
+                        <th></th>
+                    </thead>
+                    <tbody>
+                        {% for player in player_list %}
+                        <tr>
+                            <td class="">{{ player.name }}</td>
+                            <td>{{ player.joined_at }}</td>
+                            <td><span class="badge text-bg-success">Online</span></td>
+                            <!-- <td><span class="badge text-bg-danger">Offline</span></td> -->
+                            <td>
+                                <button class="btn btn-outline-primary"
+                                data-bs-toggle="modal" data-bs-target="#detailplayermodal"
+                                data-bs-player-url="{% url 'player_details' player.id %}">
+                                    Details
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if not player_list %}
+                <div class="container text-center">
+                    <br>
+                    <p>
+                        Data Empty
+                    </p>
+                </div>
+                {% endif %}
+            </div>
         </div>
-    </div>
+    {% else %}
+        <div class="d-flex justify-content-center">
+            <p>No server found, <a href="{% url 'server_list' %}" class="link-primary">click here to add new server</a></p>
+        </div>
+    {% endif %}
 
 </div>
 

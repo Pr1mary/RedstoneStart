@@ -25,7 +25,7 @@ class PlayerManagerView(LoginRequiredMixin, View):
 
         server_list_parsed = []
         server_list = ServerList.objects.all().order_by("created_at")
-        if not server_id:
+        if not server_id and server_list:
             server_id = server_list.first().pk
         for server in server_list:
             server_list_parsed.append({
@@ -107,7 +107,6 @@ class PlayerJoinManagerView(View):
 
         invite_code = req_body.get("invite-code")
         server_id = req_body.get("server-id", None)
-
 
         try:
             player_name = req_body.get("player-name")

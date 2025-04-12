@@ -3,6 +3,8 @@ from django.http import HttpResponse, JsonResponse, HttpRequest, HttpResponseRed
 from django.views.generic import View
 from .models import ServerList
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.conf import settings
+from django.urls import reverse_lazy
 
 import random, string, json
 
@@ -141,6 +143,30 @@ class ServerManagerInviteView(View):
             return JsonResponse(resp_data)
         
 class ServerManagerInviteDetailsView(View):
+
+    def get(self, request: HttpRequest, *args, **kwargs):
+
+        server_id = kwargs.get("id")
+        resp_data = {}
+
+        try:
+
+            if not server_id:
+                raise Exception("server_id is empty")
+            
+            server_details = ServerList.objects.filter(pk=server_id).first()
+            if not server_details:
+                raise Exception("server_details is empty")
+            
+            invite_code = server_details.server_invite_code
+            resp_data["invite_code"] = invite_code
+            resp_data["invite_url"] = "{}{}?invitecode={}".format(settings.APP_URL, reverse_lazy("player_join_server"), invite_code)
+
+            return JsonResponse(resp_data)
+
+        except Exception as err:
+            return JsonResponse(resp_data)
+
     
     def put(self, request: HttpRequest, *args, **kwargs):
 

@@ -4,7 +4,9 @@
 
 <div id="content container-fluid ">
 
-    <button class="btn btn-primary pull-right" data-bs-toggle="modal" data-bs-target="#addservermodal">Add new server</button>
+    <button class="btn btn-primary pull-right" data-bs-toggle="modal" data-bs-target="#addservermodal">
+        <span class="mdi mdi-plus-circle-outline"> Add Server
+    </button>
     
     <div class="row">
         
@@ -20,7 +22,10 @@
                 </p>
                 <div class="d-grip gap-2 d-md-block">
                     {% if server.invite_code %}
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#serverinvitemodal" data-bs-invite-code="{{ server.invite_code }}" data-bs-server-url="{% url 'server_invite' server.id %}">Invite Details</button>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#serverinvitemodal"
+                        data-bs-invite-code="{{ server.invite_code }}" data-bs-server-url="{% url 'server_invite' server.id %}">
+                            Invite Details
+                        </button>
                     {% else %}
                         <button class="btn btn-success" onclick="generateCode('{% url 'server_invite' server.id %}')">Open Invite</button>
                     {% endif %}
@@ -30,6 +35,12 @@
         </div>
 
         {% endfor %}
+
+        {% if not server_list %}
+            <div class="d-flex justify-content-center">
+                <p>Server list empty</p>
+            </div>
+        {% endif %}
     </div>
 
 </div>
@@ -103,6 +114,10 @@
                     <label for="invite-code" class="col-form-label">Invite Code:</label>
                     <input type="text" class="form-control" id="invite-code-details" name="invite-code" disabled>    
                 </div>
+                <div class="mb-3">
+                    <label for="invite-url" class="col-form-label">Invite URL:</label>
+                    <input type="text" class="form-control" id="invite-url-details" name="invite-url" disabled>    
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -165,13 +180,32 @@
         alert("New server has been added!")
     }
 
-    function inviteDetail(event) {
+    async function inviteDetail(event) {
         const server_url = event.relatedTarget.getAttribute('data-bs-server-url');
-        const invite_code = event.relatedTarget.getAttribute('data-bs-invite-code');
+        let invite_code = "";
+        let invite_url = "";
         const close_invitation_btn = $("#close-invite-btn")
 
-        const server_name_form = $("#invite-code-details");
-        server_name_form.val(invite_code);
+        try{
+            const resp = await fetch(server_url)
+            if(!resp.ok){
+                throw new Error("Error when fetching invite details")
+            }
+            const resp_data = await resp.json()
+            invite_code = resp_data.invite_code
+            invite_url = resp_data.invite_url
+        }catch(e){
+            console.error("Error when fetching invite details")
+        }
+
+        const invite_code_form = $("#invite-code-details");
+        invite_code_form.val(invite_code);
+
+        const invite_url_form = $("#invite-url-details");
+        invite_url_form.val(invite_url);
+        invite_url_form.on('click', () => {
+            navigator.clipboard.writeText(invite_url)
+        });
 
         close_invitation_btn.data("data-bs-server-url", server_url);
     }
