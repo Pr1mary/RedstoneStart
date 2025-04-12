@@ -2,111 +2,118 @@
 
 {% block bodydoc %}
 
-<div id="content container-fluid ">
+<div id="content">
 
-    <button class="btn btn-primary pull-right" data-bs-toggle="modal" data-bs-target="#addservermodal">Add new server</button>
-    
-    <div class="row">
-        
-        {% for server in server_list %}
-
-        <div class="card col-2" style="width: 20rem; margin: 1rem;">
-            <div class="card-body">
-                <h5 class="card-title">
-                    <strong>{{ server.name }}</strong>
-                </h5>
-                <p class="card-text">
-                    <a href="{{ server.url }}">{{ server.url }}</a>
-                </p>
-                <div class="d-grip gap-2 d-md-block">
-                    {% if server.invite_code %}
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#serverinvitemodal" data-bs-invite-code="{{ server.invite_code }}" data-bs-server-url="{% url 'server_invite' server.id %}">Invite Details</button>
-                    {% else %}
-                        <button class="btn btn-success" onclick="generateCode('{% url 'server_invite' server.id %}')">Open Invite</button>
-                    {% endif %}
-                    <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#detailservermodal" data-bs-server-url="{% url 'server_details' server.id %}">Server Details</button>
-                </div>
-            </div>
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+                {% for server in server_list %}
+                    <li class="nav-item">
+                        <a href="/playermanager/?server_id={{server.id}}" class="nav-link {% if server.active %} active {% endif %}">
+                            {{ server.name }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
         </div>
-
-        {% endfor %}
+        <div class="card-body">
+            <div class="d-flex justify-content-end">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addplayermodal">
+                    <span class="mdi mdi-plus-circle-outline"> Add Player
+                </button>    
+            </div>
+            <table class="table table-hover">
+                <thead>
+                    <th>Player Name</th>
+                    <th>Join Date</th>
+                    <th>Status</th>
+                    <th></th>
+                </thead>
+                <tbody>
+                    {% for player in player_list %}
+                    <tr>
+                        <td class="">{{ player.name }}</td>
+                        <td>{{ player.joined_at }}</td>
+                        <td><span class="badge text-bg-success">Online</span></td>
+                        <!-- <td><span class="badge text-bg-danger">Offline</span></td> -->
+                        <td>
+                            <button class="btn btn-outline-primary"
+                            data-bs-toggle="modal" data-bs-target="#detailplayermodal"
+                            data-bs-player-url="{% url 'player_details' player.id %}">
+                                Details
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% if not player_list %}
+            <div class="container text-center">
+                <br>
+                <p>
+                    Data Empty
+                </p>
+            </div>
+            {% endif %}
+        </div>
     </div>
 
 </div>
-    
-<div id="addservermodal" class="modal fade" tabindex="-1" aria-labelledby="addservermodallabel" aria-hidden="true">
+
+<div id="addplayermodal" class="modal fade" tabindex="-1" aria-labelledby="addplayermodallabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h1 class="modal-title fs-5" id="addservermodallabel">Add New Server</h1>
+                <h1 class="modal-title fs-5" id="addplayermodallabel">Add Player</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="add-server-form" action="{% url 'server_list' %}" method="post">
+                <form action="{% url 'player_list' %}" method="post" id="add-player-form">
                     {% csrf_token %}
                     <div class="mb-3">
-                        <label for="server-name" class="col-form-label">Server Name:</label>
-                        <input type="text" class="form-control" id="server-name" name="server-name">    
+                        <label for="player-name" class="col-form-label">Player Name:</label>
+                        <input type="text" class="form-control" id="player-name-add" name="player-name">    
                     </div>
                     <div class="mb-3">
-                        <label for="server-address" class="col-form-label">Server Address:</label>
-                        <input type="text" class="form-control" id="server-address" name="server-address">
+                        <label for="server-target" class="col-form-label">Server Name:</label>
+                        <select class="form-select" name="server-target" id="server-target-add">
+                            {% for server in server_list%}
+                                <option value="{{ server.id }}" {% if server.active %} selected {% endif %}>
+                                    {{ server.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="submit" class="btn btn-primary" form onclick="addNewServer()">Add Server</button>
+                <button type="submit" class="btn btn-success" id="add-player-btn" form="add-player-form">Add Player</button>
             </div>
         </div>
     </div>
 </div>
 
-<div id="detailservermodal" class="modal fade" tabindex="-1" aria-labelledby="detailservermodallabel" aria-hidden="true">
+<div id="detailplayermodal" class="modal fade" tabindex="-1" aria-labelledby="detailplayermodallabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h1 class="modal-title fs-5" id="detailservermodallabel">Current Server Details</h1>
+                <h1 class="modal-title fs-5" id="detailplayermodallabel">Player Details</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label for="server-name" class="col-form-label">Server Name:</label>
-                    <input type="text" class="form-control" id="server-name-edit" name="server-name" disabled>    
+                    <label for="player-name" class="col-form-label">Player Name:</label>
+                    <input type="text" class="form-control" id="player-name-edit" name="player-name" disabled>    
                 </div>
                 <div class="mb-3">
-                    <label for="server-address" class="col-form-label">Server Address:</label>
-                    <input type="text" class="form-control" id="server-address-edit" name="server-address" disabled>
-                </div>
-                <div class="mb-3">
-                    <label for="server-players" class="col-form-label">Total Joined Players:</label>
-                    <input type="text" class="form-control" id="server-players-edit" name="server-players" disabled>
+                    <label for="join-date" class="col-form-label">Joined Since:</label>
+                    <input type="text" class="form-control" id="join-date-edit" name="join-date" disabled>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-danger" id="delete-server-btn" onclick="deleteServer()">Delete Server</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="serverinvitemodal" class="modal fade" tabindex="-1" aria-labelledby="serverinvitemodallabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="serverinvitemodallabel">Current Server Details</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label for="invite-code" class="col-form-label">Invite Code:</label>
-                    <input type="text" class="form-control" id="invite-code-details" name="invite-code" disabled>    
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-danger" id="close-invite-btn" onclick="closeInvite()">Close Invitation</button>
+                <button type="button" class="btn btn-danger" id="delete-player-btn" onclick="deletePlayer()">Remove Player</button>
             </div>
         </div>
     </div>
@@ -114,136 +121,39 @@
 
 <script>
     $("document").ready(() => {
-        const detail_modal = $("#detailservermodal")
-        detail_modal.on("show.bs.modal", detailServer);
+        const detail_modal = $("#detailplayermodal")
+        detail_modal.on("show.bs.modal", detailPlayer);
 
-        
-        const invite_modal = $("#serverinvitemodal")
-        invite_modal.on("show.bs.modal", inviteDetail);
     });
 
-    function generateCode(server_path){
-        const generate_invite_code_url = server_path;
-        const confirm_text = "Start invite mode?"
-        const csrf_token = getcsrftoken();
-
-        if(!confirm(confirm_text)){
-            return;
-        }
-
-        const headers = {
-            "X-CSRFToken": csrf_token
-        }
-        const body_data = {
-            "code_len": 10,
-        }
-        const done = $.ajax({
-            "url": generate_invite_code_url,
-            "method": "put",
-            "headers": headers,
-            "contentType": "application/json; charset=utf-8",
-            "data": JSON.stringify(body_data),
-        }).done(data => {
-            // abort of failed from server
-            if(!data.invite_code){
-                alert("Error: failed to generate invite code from server")
-                return
-            }
-            
-            // refresh page after delete success
-            alert("Invite mode started")
-            location.reload()
-        }).fail(() => {
-            alert("Error: failed to generate invite code from server")
-        })
-    }
-
-    function addNewServer(){
-        const form_obj = $("#add-server-form");
-        form_obj.submit();
-
-        alert("New server has been added!")
-    }
-
-    function inviteDetail(event) {
-        const server_url = event.relatedTarget.getAttribute('data-bs-server-url');
-        const invite_code = event.relatedTarget.getAttribute('data-bs-invite-code');
-        const close_invitation_btn = $("#close-invite-btn")
-
-        const server_name_form = $("#invite-code-details");
-        server_name_form.val(invite_code);
-
-        close_invitation_btn.data("data-bs-server-url", server_url);
-    }
-
-    function closeInvite() {
-        const delete_invite_code_url = $("#close-invite-btn").data("data-bs-server-url");
-        const confirm_text = "Are you sure do you want to close the invitation?";
-        const csrf_token = getcsrftoken();
-        
-        if(!confirm(confirm_text)){
-            return;
-        }
-
-        const headers = {
-            "X-CSRFToken": csrf_token
-        }
-        const body_data = {
-            "code_len": 10,
-            "close_invite": true
-        }
-        const done = $.ajax({
-            "url": delete_invite_code_url,
-            "method": "put",
-            "headers": headers,
-            "contentType": "application/json; charset=utf-8",
-            "data": JSON.stringify(body_data),
-        }).done(data => {
-            // abort of failed from server
-            if(!data.invite_closed){
-                alert("Error: failed to close invitation from server")
-                return
-            }
-            
-            // refresh page after delete success
-            alert("Invitation closed!")
-            location.reload()
-        }).fail(() => {
-            alert("Error: failed to close invitation from server")
-        })
-    }
-
-    async function detailServer(event) {
-        const server_url = event.relatedTarget.getAttribute('data-bs-server-url');
-        const delete_server_btn = $("#delete-server-btn")
+    async function detailPlayer(event) {
+        const player_url = event.relatedTarget.getAttribute('data-bs-player-url');
+        const delete_player_btn = $("#delete-player-btn")
 
         try{
-            const resp = await fetch(server_url);
+            const resp = await fetch(player_url);
             if (!resp.ok) {
                 throw new Error(`Resp status: ${resp.status}`);
             }
 
             const resp_data = await resp.json();
 
-            const server_name_form = $("#server-name-edit");
-            server_name_form.val(resp_data["name"]);
+            const player_name_form = $("#player-name-edit");
+            player_name_form.val(resp_data["name"]);
 
-            const server_url_form = $("#server-address-edit");
-            server_url_form.val(resp_data["url"]);
+            const join_date_form = $("#join-date-edit");
+            join_date_form.val(resp_data["created_at"]);
 
-            const server_players_form = $("#server-players-edit");
-            server_players_form.val(resp_data["players"]);
-
-            delete_server_btn.data("data-bs-server-url", server_url);
+            delete_player_btn.data("data-bs-player-url", player_url);
 
         }catch(err){
             console.log(err.message);
         }
     }
 
-    function deleteServer(){
-        const delete_server_url = $("#delete-server-btn").data("data-bs-server-url");
-        const confirm_text = "Are you sure do you want to delete this server?";
+    function deletePlayer(){
+        const delete_server_url = $("#delete-player-btn").data("data-bs-player-url");
+        const confirm_text = "Are you sure do you want to remove this player from this server?";
         const csrf_token = getcsrftoken();
         
         if(!confirm(confirm_text)){

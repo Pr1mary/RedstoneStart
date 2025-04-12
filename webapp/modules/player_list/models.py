@@ -6,9 +6,11 @@ class PlayerList(models.Model):
 
     player_name = models.CharField(max_length=255, null=True, blank=True)
     invite_code = models.CharField(max_length=255, null=True, blank=True)
-    owner = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="player")
+    owner = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="player_owner")
     created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="player_cb")
     updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="player_ub")
 
 class PlayerServerMap(models.Model):
     
