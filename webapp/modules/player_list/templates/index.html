@@ -78,11 +78,11 @@
                     {% csrf_token %}
                     <div class="mb-3">
                         <label for="player-name" class="col-form-label">Player Name:</label>
-                        <input type="text" class="form-control" id="player-name-add" name="player-name">    
+                        <input type="text" class="form-control" id="player-name-add" name="player-name" required>
                     </div>
                     <div class="mb-3">
                         <label for="server-target" class="col-form-label">Server Name:</label>
-                        <select class="form-select" name="server-target" id="server-target-add">
+                        <select class="form-select" name="server-target" id="server-target-add" required>
                             {% for server in server_list%}
                                 <option value="{{ server.id }}" {% if server.active %} selected {% endif %}>
                                     {{ server.name }}
