@@ -35,8 +35,13 @@
                         <tr>
                             <td class="">{{ player.name }}</td>
                             <td>{{ player.joined_at }}</td>
-                            <td><span class="badge text-bg-success">Online</span></td>
-                            <!-- <td><span class="badge text-bg-danger">Offline</span></td> -->
+                            <td>
+                            {% if player.status == "BANNED"%}
+                                <span class="badge text-bg-danger">Banned</span>
+                            {% else %}
+                                <span class="badge text-bg-primary">Outstanding</span>
+                            {% endif %}
+                            </td>
                             <td>
                                 <button class="btn btn-outline-primary"
                                 data-bs-toggle="modal" data-bs-target="#detailplayermodal"
@@ -78,7 +83,7 @@
                     {% csrf_token %}
                     <div class="mb-3">
                         <label for="player-name" class="col-form-label">Player Name:</label>
-                        <input type="text" class="form-control" id="player-name-add" name="player-name" required>
+                        <input type="text" class="form-control" id="player-name-add" name="player-name" maxlength="16" required>
                     </div>
                     <div class="mb-3">
                         <label for="server-target" class="col-form-label">Server Name:</label>

@@ -5,6 +5,9 @@ from .models import PlayerList, PlayerServerMap, ServerList
 from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
+from django.db import connection
+from webapp.utils.mc_rcon_util import MCRconUtil
+from multiprocessing import Process, Pool
 
 import random, string, json
 
@@ -38,9 +41,13 @@ class PlayerManagerView(LoginRequiredMixin, View):
         player_detail_list = []
         for player in player_map_list:
 
+            status_name = "ONLINE" if player.online_status else "OFFLINE"
+            status_name = "BANNED" if player.banned_status else status_name
+
             player_detail = {
                 "id": player.pk,
                 "name": player.player_invited.player_name,
+                "status": status_name, 
                 "joined_at": player.created_at,
                 "created_at": player.player_invited.created_at
             }
@@ -70,7 +77,7 @@ class PlayerManagerView(LoginRequiredMixin, View):
             }
         )
 
-        player_server_map, _ = PlayerServerMap.objects.get_or_create(
+        player_server_map, player_server_map_created = PlayerServerMap.objects.get_or_create(
             player_invited=player_details,
             server_joined_id=server_id,
             defaults={
@@ -79,7 +86,49 @@ class PlayerManagerView(LoginRequiredMixin, View):
             }
         )
 
+        if player_server_map_created:
+            player_mapping_process = Process(target=self.__add_whitelist_player, args=[player_server_map.pk])
+            player_mapping_process.start()
+
         return redirect("player_list")
+    
+    def __add_whitelist_player(self, player_server_id:str):
+
+        try:
+            connection.close()
+            
+            if not player_server_id:
+                raise Exception("Player server map id is empty")
+            
+            player_server_map_details = PlayerServerMap.objects.filter(pk=player_server_id).first()
+            if not player_server_map_details:
+                raise Exception("Player server map not found")
+
+            server_address = player_server_map_details.server_joined.server_url
+            server_secret = player_server_map_details.server_joined.server_secret
+            server_is_vanilla = player_server_map_details.server_joined.server_is_vanilla
+
+            player_name = player_server_map_details.player_invited.player_name
+
+            mcrcon = MCRconUtil(server_address, server_secret, is_vanilla=server_is_vanilla)
+            player_whitelist = mcrcon.addWhitelist(player_name)
+            if not player_whitelist:
+                raise Exception("problem when whitelisting player")
+
+            print("Add player '{}' to whitelist success".format(player_name))
+
+            player_online_list = mcrcon.getPlayerList()
+            if player_name in player_online_list:
+                player_server_map_details.online_status = True
+                player_server_map_details.save()
+                
+                print("Player '{}' status updated to ONLINE".format(player_name))
+
+        except Exception as err:
+            print("Error add player whitelist: {}".format(err))
+        
+        finally:
+            connection.close()
     
 class PlayerJoinManagerView(View):
     template = "modules/player_list/templates/index_player_invite.html"
@@ -192,11 +241,17 @@ class PlayerManagerDetailView(View):
             player_details = player_server_map.player_invited
             player_server_map_count_before = player_details.player_server_map.all().count()
 
+            server_id = player_server_map.server_joined.pk
+            player_name = player_details.player_name
+
             player_server_map.delete()
 
             if player_server_map_count_before <= 1:
                 player_details.delete()
 
+            player_mapping_process = Process(target=self.__remove_whitelist_player, args=[server_id, player_name])
+            player_mapping_process.start()
+            
             resp_data["deleted"] = True
 
             return JsonResponse(resp_data)
@@ -204,3 +259,35 @@ class PlayerManagerDetailView(View):
         except Exception as err:
             resp_data["deleted"] = False
             return JsonResponse(resp_data)
+
+    def __remove_whitelist_player(self, server_id: str, player_name:str):
+
+        try:
+            connection.close()
+            
+            if not player_name:
+                raise Exception("Player name is empty")
+            elif not server_id:
+                raise Exception("Server id is empty")
+            
+            server_details = ServerList.objects.filter(pk=server_id).first()
+            if not server_details:
+                raise Exception("Server not found")
+
+            server_address = server_details.server_url
+            server_secret = server_details.server_secret
+            server_is_vanilla = server_details.server_is_vanilla
+
+            mcrcon = MCRconUtil(server_address, server_secret, is_vanilla=server_is_vanilla)
+            player_whitelist = mcrcon.delWhitelist(player_name)
+            if not player_whitelist:
+                raise Exception("problem when removing whitelisted player")
+
+            print("Remove player '{}' from whitelist success".format(player_name))
+
+        except Exception as err:
+            print("Error remove player whitelist: {}".format(err))
+        
+        finally:
+            connection.close()
+    

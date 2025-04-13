@@ -65,7 +65,7 @@ class MCRconUtil:
         if not isinstance(username, str):
             return False
         
-        command_str = "whitelist  {}".format(username)
+        command_str = "whitelist remove {}".format(username)
         self.__command(command_str)
 
         return True
