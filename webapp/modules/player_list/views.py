@@ -38,11 +38,12 @@ class PlayerManagerView(LoginRequiredMixin, View):
             })
         player_map_list = PlayerServerMap.objects.filter(server_joined__pk=server_id).order_by("-created_at")
         
-        player_detail_list = []
+        player_server_detail_list = []
         for player in player_map_list:
 
             status_name = "ONLINE" if player.online_status else "OFFLINE"
             status_name = "BANNED" if player.banned_status else status_name
+            status_name = "FAILED" if not player.is_synced else status_name
 
             player_detail = {
                 "id": player.pk,
@@ -51,10 +52,10 @@ class PlayerManagerView(LoginRequiredMixin, View):
                 "joined_at": player.created_at,
                 "created_at": player.player_invited.created_at
             }
-            player_detail_list.append(player_detail)
+            player_server_detail_list.append(player_detail)
 
         self.ctx["server_list"] = server_list_parsed
-        self.ctx["player_list"] = player_detail_list
+        self.ctx["player_server_list"] = player_server_detail_list
 
         return render(request, self.template, self.ctx)
     
@@ -116,13 +117,15 @@ class PlayerManagerView(LoginRequiredMixin, View):
                 raise Exception("problem when whitelisting player")
 
             print("Add player '{}' to whitelist success".format(player_name))
-
+            
             player_online_list = mcrcon.getPlayerList()
             if player_name in player_online_list:
                 player_server_map_details.online_status = True
-                player_server_map_details.save()
                 
                 print("Player '{}' status updated to ONLINE".format(player_name))
+            
+            player_server_map_details.is_synced = True
+            player_server_map_details.save()
 
         except Exception as err:
             print("Error add player whitelist: {}".format(err))
@@ -169,14 +172,22 @@ class PlayerJoinManagerView(View):
             player, _ = PlayerList.objects.get_or_create(
                 player_name = player_name,
                 defaults={
-                    "owner": find_server.created_by
+                    "created_by": find_server.created_by,
+                    "updated_by": find_server.created_by,
                 },
             )
 
             player_map, _ = PlayerServerMap.objects.get_or_create(
                 player_invited = player,
                 server_joined = find_server,
+                defaults={
+                    "created_by": find_server.created_by,
+                    "updated_by": find_server.created_by,
+                },
             )
+
+            player_handler = PlayerHandler()
+            player_handler.__add_whitelist_player()
 
         except Exception as err:
             print(f"Error when storing server: {err.args}")
@@ -208,11 +219,17 @@ class PlayerManagerDetailView(View):
                         "server_id": 0,
                     })
 
+                status_name = "ONLINE" if server.online_status else "OFFLINE"
+                status_name = "BANNED" if server.banned_status else status_name
+                status_name = "FAILED" if not server.is_synced else status_name
+
                 server_list.append({
+                    "server_player_id": server.pk,
                     "server_id": server.server_joined.pk,
-                    "server_name": server.server_joined.server_name,
-                    "server_id": server.server_joined.server_url,
-                    "server_joined_at": server.created_at
+                    "server_name": server.server_joined.server_name, 
+                    "server_url": server.server_joined.server_url,
+                    "server_joined_at": server.created_at,
+                    "player_status": status_name
                 })
                 
             resp_data["id"] = player_details.pk
@@ -290,4 +307,221 @@ class PlayerManagerDetailView(View):
         
         finally:
             connection.close()
+
+
+class PlayerBanManagerView(View):
     
+    def post(self, request: HttpRequest, *args, **kwargs):
+
+        req_body = request.POST
+
+        player_server_id = req_body.get("player-server-id", None)
+        ban_reason = req_body.get("reason-text", "Banned by administrator")
+        resp_data = {}
+
+        try:
+
+            player_map = PlayerServerMap.objects.filter(pk=player_server_id).first()
+            if not player_map:
+                raise Exception("player server map was not found")
+            
+            player_map.banned_status = True
+            player_map.banned_reason = ban_reason
+            player_map.save()
+
+            player_handler = PlayerHandler()
+            player_handler.ban_player(player_map.pk)
+            
+            resp_data["banned"] = True
+
+        except Exception as err:
+            print(f"Error when banning player to server: {err.args}")
+            resp_data["banned"] = False
+
+        return JsonResponse(resp_data)
+    
+class PlayerUnbanManagerView(View):
+    
+    def post(self, request: HttpRequest, *args, **kwargs):
+
+        req_body = request.POST
+
+        player_server_id = req_body.get("player-server-id", None)
+        resp_data = {}
+
+        try:
+
+            player_map = PlayerServerMap.objects.filter(pk=player_server_id).first()
+            if not player_map:
+                raise Exception("player server map was not found")
+            
+            player_map.banned_status = False
+            player_map.save()
+
+            player_handler = PlayerHandler()
+            player_handler.unban_player(player_map.pk)
+            
+            resp_data["unbanned"] = True
+
+        except Exception as err:
+            print(f"Error when unbanning player to server: {err.args}")
+            resp_data["unbanned"] = False
+
+        return JsonResponse(resp_data)
+    
+class PlayerHandler():
+
+    def add_whitelist_player(self, player_server_id:str):
+        
+        player_mapping_process = Process(target=self.__add_whitelist, args=[player_server_id])
+        player_mapping_process.start()
+
+    def del_whitelist_player(self, server_id: str, player_name:str):
+
+        player_mapping_process = Process(target=self.__remove_whitelist, args=[server_id, player_name])
+        player_mapping_process.start()
+
+    def ban_player(self, player_server_id:str):
+        
+        player_mapping_process = Process(target=self.__ban_player, args=[player_server_id])
+        player_mapping_process.start()
+
+    def unban_player(self, player_server_id:str):
+
+        player_mapping_process = Process(target=self.__unban_player, args=[player_server_id])
+        player_mapping_process.start()
+    
+    def __add_whitelist(self, player_server_id:str):
+
+        try:
+            connection.close()
+            
+            if not player_server_id:
+                raise Exception("Player server map id is empty")
+            
+            player_server_map_details = PlayerServerMap.objects.filter(pk=player_server_id).first()
+            if not player_server_map_details:
+                raise Exception("Player server map not found")
+
+            server_address = player_server_map_details.server_joined.server_url
+            server_secret = player_server_map_details.server_joined.server_secret
+            server_is_vanilla = player_server_map_details.server_joined.server_is_vanilla
+
+            player_name = player_server_map_details.player_invited.player_name
+
+            mcrcon = MCRconUtil(server_address, server_secret, is_vanilla=server_is_vanilla)
+            player_whitelist = mcrcon.addWhitelist(player_name)
+            if not player_whitelist:
+                raise Exception("problem when whitelisting player")
+
+            print("Add player '{}' to whitelist success".format(player_name))
+            
+            player_online_list = mcrcon.getPlayerList()
+            if player_name in player_online_list:
+                player_server_map_details.online_status = True
+                
+                print("Player '{}' status updated to ONLINE".format(player_name))
+            
+            player_server_map_details.is_synced = True
+            player_server_map_details.save()
+
+        except Exception as err:
+            print("Error add player whitelist: {}".format(err))
+        
+        finally:
+            connection.close()
+
+    def __remove_whitelist(self, server_id: str, player_name:str):
+
+        try:
+            connection.close()
+            
+            if not player_name:
+                raise Exception("Player name is empty")
+            elif not server_id:
+                raise Exception("Server id is empty")
+            
+            server_details = ServerList.objects.filter(pk=server_id).first()
+            if not server_details:
+                raise Exception("Server not found")
+
+            server_address = server_details.server_url
+            server_secret = server_details.server_secret
+            server_is_vanilla = server_details.server_is_vanilla
+
+            mcrcon = MCRconUtil(server_address, server_secret, is_vanilla=server_is_vanilla)
+            player_whitelist = mcrcon.delWhitelist(player_name)
+            if not player_whitelist:
+                raise Exception("problem when removing whitelisted player")
+
+            print("Remove player '{}' from whitelist success".format(player_name))
+
+        except Exception as err:
+            print("Error remove player whitelist: {}".format(err))
+        
+        finally:
+            connection.close()
+
+    def __ban_player(self, player_server_id:str):
+
+        try:
+            connection.close()
+            
+            if not player_server_id:
+                raise Exception("Player server map id is empty")
+            
+            player_server_map_details = PlayerServerMap.objects.filter(pk=player_server_id).first()
+            if not player_server_map_details:
+                raise Exception("Player server map not found")
+
+            server_address = player_server_map_details.server_joined.server_url
+            server_secret = player_server_map_details.server_joined.server_secret
+            server_is_vanilla = player_server_map_details.server_joined.server_is_vanilla
+
+            player_name = player_server_map_details.player_invited.player_name
+
+            ban_reason = player_server_map_details.banned_reason
+
+            mcrcon = MCRconUtil(server_address, server_secret, is_vanilla=server_is_vanilla)
+            player_banned = mcrcon.banPlayer(player_name, ban_reason)
+            if not player_banned:
+                raise Exception("problem when banning player")
+
+            print("Ban player '{}' success".format(player_name))
+            
+        except Exception as err:
+            print("Error when banning player: {}".format(err))
+        
+        finally:
+            connection.close()
+    
+    def __unban_player(self, player_server_id:str):
+
+        try:
+            connection.close()
+            
+            if not player_server_id:
+                raise Exception("Player server map id is empty")
+            
+            player_server_map_details = PlayerServerMap.objects.filter(pk=player_server_id).first()
+            if not player_server_map_details:
+                raise Exception("Player server map not found")
+
+            server_address = player_server_map_details.server_joined.server_url
+            server_secret = player_server_map_details.server_joined.server_secret
+            server_is_vanilla = player_server_map_details.server_joined.server_is_vanilla
+
+            player_name = player_server_map_details.player_invited.player_name
+
+            mcrcon = MCRconUtil(server_address, server_secret, is_vanilla=server_is_vanilla)
+            player_unbanned = mcrcon.pardonPlayer(player_name)
+            if not player_unbanned:
+                raise Exception("problem when unbanning player")
+
+            print("Unban player '{}' success".format(player_name))
+            
+        except Exception as err:
+            print("Error when unbanning player: {}".format(err))
+        
+        finally:
+            connection.close()

@@ -83,6 +83,29 @@ class MCRconUtil:
         
         return name_list
     
+    def banPlayer(self, username: str, reason:str = None):
+
+        if not isinstance(username, str):
+            return False
+        
+        if not reason:
+            reason = "Banned by an operator"
+
+        command_str = "ban {} {}".format(username, reason)
+        self.__command(command_str)
+
+        return True
+    
+    def pardonPlayer(self, username: str):
+
+        if not isinstance(username, str):
+            return False
+        
+        command_str = "pardon {}".format(username)
+        self.__command(command_str)
+
+        return True
+
     def setDifficulty(self, difficulty: str):
 
         if not isinstance(difficulty, str):

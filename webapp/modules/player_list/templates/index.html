@@ -31,13 +31,15 @@
                         <th></th>
                     </thead>
                     <tbody>
-                        {% for player in player_list %}
+                        {% for player_server in player_server_list %}
                         <tr>
-                            <td class="">{{ player.name }}</td>
-                            <td>{{ player.joined_at }}</td>
+                            <td class="">{{ player_server.name }}</td>
+                            <td>{{ player_server.joined_at }}</td>
                             <td>
-                            {% if player.status == "BANNED"%}
+                            {% if player_server.status == "BANNED"%}
                                 <span class="badge text-bg-danger">Banned</span>
+                            {% elif player_server.status == "FAILED" %}
+                                <span class="badge text-bg-warning">Failed</span>
                             {% else %}
                                 <span class="badge text-bg-primary">Outstanding</span>
                             {% endif %}
@@ -45,7 +47,8 @@
                             <td>
                                 <button class="btn btn-outline-primary"
                                 data-bs-toggle="modal" data-bs-target="#detailplayermodal"
-                                data-bs-player-url="{% url 'player_details' player.id %}">
+                                data-bs-player-url="{% url 'player_details' player_server.id %}"
+                                data-bs-player-server-id="{{ player_server.id }}">
                                     Details
                                 </button>
                             </td>
@@ -53,7 +56,7 @@
                         {% endfor %}
                     </tbody>
                 </table>
-                {% if not player_list %}
+                {% if not player_server_list %}
                 <div class="container text-center">
                     <br>
                     <p>
@@ -121,10 +124,18 @@
                     <label for="join-date" class="col-form-label">Joined Since:</label>
                     <input type="text" class="form-control" id="join-date-edit" name="join-date" disabled>
                 </div>
+                <div class="mb-3">
+                    <label for="join-date" class="col-form-label">Status:</label>
+                    <span id="detail-status-banned" class="badge text-bg-danger" style="display: none;">Banned</span>
+                    <span id="detail-status-failed" class="badge text-bg-warning" style="display: none;">Failed</span>
+                    <span id="detail-status-outstanding" class="badge text-bg-primary" style="display: none;">Outstanding</span>
+                </div>
             </div>
             <div class="modal-footer">
+                <button type="button" class="btn btn-warning" id="ban-player-btn" onclick="banPlayer()" style="display: none;"><span class="mdi mdi-cancel"></span> Ban</button>
+                <button type="button" class="btn btn-primary" id="unban-player-btn" onclick="unbanPlayer()" style="display: none;"><span class="mdi mdi-information-box-outline"></span> Unban</button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-danger" id="delete-player-btn" onclick="deletePlayer()">Remove Player</button>
+                <button type="button" class="btn btn-danger" id="delete-player-btn" onclick="deletePlayer()"><span class="mdi mdi-trash-can-outline"></span> Remove</button>
             </div>
         </div>
     </div>
@@ -139,7 +150,10 @@
 
     async function detailPlayer(event) {
         const player_url = event.relatedTarget.getAttribute('data-bs-player-url');
-        const delete_player_btn = $("#delete-player-btn")
+        const delete_player_btn = $("#delete-player-btn");
+        const ban_player_btn = $("#ban-player-btn");
+        const unban_player_btn = $("#unban-player-btn");
+        const curr_player_server_id = event.relatedTarget.getAttribute("data-bs-player-server-id");
 
         try{
             const resp = await fetch(player_url);
@@ -155,11 +169,124 @@
             const join_date_form = $("#join-date-edit");
             join_date_form.val(resp_data["created_at"]);
 
+            let curr_player_status = "";
+            const server_list = resp_data["server_list"];
+            for(let server of server_list){
+                
+                console.log(player_url+" >> "+JSON.stringify(server_list))
+                if(server["server_player_id"].toString() !== curr_player_server_id.toString()) continue;
+
+                curr_player_status = server["player_status"];
+                break;
+            }
+
+            const status_outstanding_label = $("#detail-status-outstanding")
+            const status_banned_label = $("#detail-status-banned")
+            const status_failed_label = $("#detail-status-failed")
+            switch(curr_player_status){
+                case "BANNED":
+                    unban_player_btn.show();
+                    ban_player_btn.hide();
+
+                    status_outstanding_label.hide();
+                    status_banned_label.show();
+                    status_failed_label.hide();
+                    break;
+                case "FAILED":
+                    unban_player_btn.hide();
+                    ban_player_btn.show();
+
+                    status_outstanding_label.hide();
+                    status_banned_label.hide();
+                    status_failed_label.show();
+                    break;
+                default:
+                    unban_player_btn.hide();
+                    ban_player_btn.show();
+
+                    status_outstanding_label.show();
+                    status_banned_label.hide();
+                    status_failed_label.hide();
+            }
+
+            ban_player_btn.data("data-bs-player-server-id", curr_player_server_id);
+            unban_player_btn.data("data-bs-player-server-id", curr_player_server_id);
             delete_player_btn.data("data-bs-player-url", player_url);
 
         }catch(err){
             console.log(err.message);
         }
+    }
+
+    function banPlayer(){
+        const ban_player_url = "{% url 'player_server_ban' %}";
+        const player_server_id = $("#ban-player-btn").data("data-bs-player-server-id");
+        console.log(player_server_id)
+        const ban_question = "What is the reason for the ban?";
+        const ban_answer = prompt(ban_question, "Banned by an operator");
+        const csrf_token = getcsrftoken();
+
+        if(!ban_answer){
+            return;
+        }
+        const body_data = {
+            "player-server-id": player_server_id,
+            "reason-text": ban_answer 
+        }
+        const headers = {
+            "X-CSRFToken": csrf_token
+        }
+        const done = $.ajax({
+            "url": ban_player_url,
+            "method": "POST",
+            "headers": headers,
+            "data": body_data
+        }).done(data => {
+            // abort of failed from server
+            if(!data.banned){
+                alert("Error: failed to ban player from the server")
+                return
+            }
+
+            location.reload()
+            
+        }).fail(() => {
+            alert("Error: failed to ban player")
+        })
+    }
+
+    function unbanPlayer(){
+        const unban_player_url = "{% url 'player_server_unban' %}";
+        const player_server_id = $("#unban-player-btn").data("data-bs-player-server-id");
+        const confirm_text = "Are you sure do you want to unban this player from this server?";
+        const csrf_token = getcsrftoken();
+        
+        if(!confirm(confirm_text)){
+            return;
+        }
+        const body_data = {
+            "player-server-id": player_server_id,
+        }
+        const headers = {
+            "X-CSRFToken": csrf_token
+        }
+        const done = $.ajax({
+            "url": unban_player_url,
+            "method": "POST",
+            "headers": headers,
+            "data": body_data
+        }).done(data => {
+            // abort of failed from server
+            if(!data.unbanned){
+                alert("Error: failed to unban player from the server")
+                return
+            }
+
+            location.reload()
+            
+        }).fail(() => {
+            alert("Error: failed to unban player")
+        })
     }
 
     function deletePlayer(){

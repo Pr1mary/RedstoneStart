@@ -16,6 +16,7 @@ class PlayerServerMap(models.Model):
     
     player_invited = models.ForeignKey(PlayerList, on_delete=models.CASCADE, related_name="player_server_map")
     server_joined = models.ForeignKey(ServerList, on_delete=models.CASCADE, related_name="player_server_map")
+    is_synced = models.BooleanField(default=False)
     online_status = models.BooleanField(default=False)
     banned_status = models.BooleanField(default=False)
     banned_reason = models.CharField(max_length=255, null=True, blank=True)
