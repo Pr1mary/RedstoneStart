@@ -19,15 +19,15 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col">
-                        <select class="form-select" aria-label="Status select" id="status-select">
-                            <option value="ALL">All</option>
-                            <option value="OUTSTANDING">Outstanding</option>
-                            <option value="BANNED">Banned</option>
-                            <option value="FAILED">Failed</option>
+                    <div class="col-2">
+                        <select class="form-select" aria-label="Status select" id="player-status-select">
+                            <option value="ALL" {% if not curr_filter_status %} selected {% endif %}>All</option>
+                            <option value="OUTSTANDING" {% if curr_filter_status == "OUTSTANDING" %} selected {% endif %}>Outstanding</option>
+                            <option value="BANNED" {% if curr_filter_status == "BANNED" %} selected {% endif %}>Banned</option>
+                            <option value="FAILED" {% if curr_filter_status == "FAILED" %} selected {% endif %}>Failed</option>
                         </select>
                     </div>
-                    <div class="col">
+                    <div class="col-5">
                         <div class="input-group mb-3">
                             <span class="input-group-text mdi mdi-magnify" id="basic-addon1"></span>
                             <input id="search-username-input" type="text"
@@ -41,7 +41,7 @@
                         <div class="d-flex justify-content-end">
                             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addplayermodal">
                                 <span class="mdi mdi-plus-circle-outline"> Add Player
-                            </button>    
+                            </button> 
                         </div>
                     </div>
                 </div>
@@ -171,10 +171,28 @@
         const search_username = $("#search-username-input");
         search_username.keypress(searchUsername);
 
+        const filter_username = $("#player-status-select");
+        filter_username.change(filterUsername)
+
     });
 
     function filterUsername(event) {
-        const status_val = $(this.id).val();
+        const status_val = $(this).val();
+
+        let curr_url = $(location).attr("href");
+        let target_url = curr_url.split("?")[0] + "?";
+        let query_url_str = (curr_url.split("?").length > 1)? curr_url.split("?")[1]:"";
+        let query_url_list = (query_url_str)?query_url_str.split("&"):[];
+
+        let new_query_url_list = []
+
+        for(let query_url of query_url_list){
+            if(!query_url) continue;
+            if(query_url.includes("status=")) continue;
+            target_url += query_url+"&";
+        }
+        if (status_val && status_val !== "ALL") target_url += "status="+status_val+"&"
+        location.href = target_url
     }
 
     function searchUsername(event) {
@@ -182,15 +200,21 @@
         const target_name = $(this).val()
         // let target_url = "{% url 'player_list' %}?"
         let curr_url = $(location).attr("href");
-        let target_url = curr_url.split("?")[0];
+        let target_url = curr_url.split("?")[0] + "?";
         let query_url_str = (curr_url.split("?").length > 1)? curr_url.split("?")[1]:"";
         let query_url_list = (query_url_str)?query_url_str.split("&"):[];
 
+        let new_query_url_list = []
 
         if (event.keyCode == 13){
+            for(let query_url of query_url_list){
+                if(!query_url) continue;
+                if(query_url.includes("server_id=")) continue;
+                if(query_url.includes("username=")) continue;
+                target_url += query_url+"&";
+            }
             if (curr_server_id) target_url += "server_id="+curr_server_id+"&"
             if (target_name) target_url += "username="+target_name+"&"
-            console.log(curr_server_id + " -- " + target_name)
             location.href = target_url
         }
     }
@@ -220,7 +244,6 @@
             const server_list = resp_data["server_list"];
             for(let server of server_list){
                 
-                console.log(player_url+" >> "+JSON.stringify(server_list))
                 if(server["server_player_id"].toString() !== curr_player_server_id.toString()) continue;
 
                 curr_player_status = server["player_status"];
@@ -268,7 +291,6 @@
     function banPlayer(){
         const ban_player_url = "{% url 'player_server_ban' %}";
         const player_server_id = $("#ban-player-btn").data("data-bs-player-server-id");
-        console.log(player_server_id)
         const ban_question = "What is the reason for the ban?";
         const ban_answer = prompt(ban_question, "Banned by an operator");
         const csrf_token = getcsrftoken();

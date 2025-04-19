@@ -8,6 +8,7 @@ from django.urls import reverse_lazy
 from django.db import connection
 from webapp.utils.mc_rcon_util import MCRconUtil
 from multiprocessing import Process, Pool
+from datetime import datetime
 
 import random, string, json
 
@@ -22,7 +23,7 @@ class PlayerManagerView(LoginRequiredMixin, View):
 
         server_id = request.GET.get("server_id", None)
         username_target = request.GET.get("username", None)
-        user_status = request.GET.get("user_status", None)
+        user_status = request.GET.get("status", None)
         try:
             server_id = int(server_id)
         except:
@@ -50,7 +51,9 @@ class PlayerManagerView(LoginRequiredMixin, View):
         if user_status and user_status == "BANNED":
             player_map_list = player_map_list.filter(banned_status=True)
         elif user_status and user_status == "FAILED":
-            player_map_list = player_map_list.filter(is_synced=True)
+            player_map_list = player_map_list.filter(is_synced=False)
+        elif user_status and user_status == "OUTSTANDING":
+            player_map_list = player_map_list.filter(banned_status=False, is_synced=True)
         
         player_server_detail_list = []
         for player in player_map_list:
@@ -71,7 +74,7 @@ class PlayerManagerView(LoginRequiredMixin, View):
         self.ctx["server_list"] = server_list_parsed
         self.ctx["curr_server_id"] = curr_server_id
         self.ctx["curr_username_target"] = username_target if username_target else ""
-        self.ctx["curr_user_status"] = user_status
+        self.ctx["curr_filter_status"] = user_status
         self.ctx["player_server_list"] = player_server_detail_list
 
         return render(request, self.template, self.ctx)
@@ -344,6 +347,7 @@ class PlayerBanManagerView(View):
             
             player_map.banned_status = True
             player_map.banned_reason = ban_reason
+            player_map.banned_at = datetime.now()
             player_map.save()
 
             player_handler = PlayerHandler()
