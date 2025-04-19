@@ -173,11 +173,18 @@
 
     });
 
+    function filterUsername(event) {
+        const status_val = $(this.id).val();
+    }
 
     function searchUsername(event) {
         const curr_server_id = $(event.relatedTarget).attr("data-bs-curr-server-id");
         const target_name = $(this).val()
-        let target_url = "{% url 'player_list' %}?"
+        // let target_url = "{% url 'player_list' %}?"
+        let curr_url = $(location).attr("href");
+        let target_url = curr_url.split("?")[0];
+        let query_url_str = (curr_url.split("?").length > 1)? curr_url.split("?")[1]:"";
+        let query_url_list = (query_url_str)?query_url_str.split("&"):[];
 
 
         if (event.keyCode == 13){
