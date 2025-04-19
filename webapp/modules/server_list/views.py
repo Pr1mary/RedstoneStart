@@ -127,6 +127,48 @@ class ServerManagerDetailView(View):
         except Exception as err:
             return JsonResponse(resp_data)
         
+    def put(self, request: HttpRequest, *args, **kwargs):
+
+        server_id = kwargs.get("id")
+        req_data = json.loads(request.body)
+        resp_data = {}
+
+        try:
+            if not server_id:
+                raise Exception("server_id is empty")
+            
+            server_details = ServerList.objects.filter(pk=server_id).first()
+            if not server_details:
+                raise Exception("server_details is empty")
+            
+            data_changed = False
+
+            server_name = req_data.get("server_name")
+            if server_name and server_name != server_details.server_name:
+                server_details.server_name = server_name
+                data_changed = True
+
+            server_url = req_data.get("server_url")
+            if server_url and server_url != server_details.server_url:
+                server_details.server_url = server_url
+                data_changed = True
+
+            server_secret = req_data.get("server_secret")
+            if server_secret and server_secret != server_details.server_secret:
+                server_details.server_secret = server_secret
+                data_changed = True
+
+            if data_changed:
+                server_details.save()
+
+            resp_data["updated"] = True
+
+            return JsonResponse(resp_data)
+
+        except Exception as err:
+            resp_data["updated"] = False
+            return JsonResponse(resp_data)
+        
     def delete(self, request: HttpRequest, *args, **kwargs):
 
         server_id = kwargs.get("id")
