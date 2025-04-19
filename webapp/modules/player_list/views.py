@@ -21,22 +21,36 @@ class PlayerManagerView(LoginRequiredMixin, View):
     def get(self, request: HttpRequest, *args, **kwargs):
 
         server_id = request.GET.get("server_id", None)
+        username_target = request.GET.get("username", None)
+        user_status = request.GET.get("user_status", None)
         try:
             server_id = int(server_id)
         except:
             server_id = None
 
+        curr_server_id = None
         server_list_parsed = []
         server_list = ServerList.objects.all().order_by("created_at")
         if not server_id and server_list:
             server_id = server_list.first().pk
+            curr_server_id = server_id
         for server in server_list:
             server_list_parsed.append({
                 "id": server.pk,
                 "name": server.server_name,
                 "active": server.pk == server_id
             })
+            if server.pk == server_id:
+                curr_server_id = server_id
         player_map_list = PlayerServerMap.objects.filter(server_joined__pk=server_id).order_by("-created_at")
+
+        if username_target:
+            player_map_list = player_map_list.filter(player_invited__player_name__icontains=username_target)
+
+        if user_status and user_status == "BANNED":
+            player_map_list = player_map_list.filter(banned_status=True)
+        elif user_status and user_status == "FAILED":
+            player_map_list = player_map_list.filter(is_synced=True)
         
         player_server_detail_list = []
         for player in player_map_list:
@@ -55,6 +69,9 @@ class PlayerManagerView(LoginRequiredMixin, View):
             player_server_detail_list.append(player_detail)
 
         self.ctx["server_list"] = server_list_parsed
+        self.ctx["curr_server_id"] = curr_server_id
+        self.ctx["curr_username_target"] = username_target if username_target else ""
+        self.ctx["curr_user_status"] = user_status
         self.ctx["player_server_list"] = player_server_detail_list
 
         return render(request, self.template, self.ctx)

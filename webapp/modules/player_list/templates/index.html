@@ -10,7 +10,7 @@
                 <ul class="nav nav-tabs card-header-tabs">
                     {% for server in server_list %}
                         <li class="nav-item">
-                            <a href="/playermanager/?server_id={{server.id}}" class="nav-link {% if server.active %} active {% endif %}">
+                            <a href="{% url 'player_list' %}?server_id={{server.id}}" class="nav-link {% if server.active %} active {% endif %}">
                                 {{ server.name }}
                             </a>
                         </li>
@@ -18,10 +18,32 @@
                 </ul>
             </div>
             <div class="card-body">
-                <div class="d-flex justify-content-end">
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addplayermodal">
-                        <span class="mdi mdi-plus-circle-outline"> Add Player
-                    </button>    
+                <div class="row">
+                    <div class="col">
+                        <select class="form-select" aria-label="Status select" id="status-select">
+                            <option value="ALL">All</option>
+                            <option value="OUTSTANDING">Outstanding</option>
+                            <option value="BANNED">Banned</option>
+                            <option value="FAILED">Failed</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text mdi mdi-magnify" id="basic-addon1"></span>
+                            <input id="search-username-input" type="text"
+                            class="form-control" placeholder="Search username"
+                            aria-label="Search username" aria-describedby="basic-addon1"
+                            data-bs-curr-server-id="{{ curr_server_id }}"
+                            value="{{ curr_username_target }}">
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="d-flex justify-content-end">
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addplayermodal">
+                                <span class="mdi mdi-plus-circle-outline"> Add Player
+                            </button>    
+                        </div>
+                    </div>
                 </div>
                 <table class="table table-hover">
                     <thead>
@@ -143,10 +165,28 @@
 
 <script>
     $("document").ready(() => {
-        const detail_modal = $("#detailplayermodal")
+        const detail_modal = $("#detailplayermodal");
         detail_modal.on("show.bs.modal", detailPlayer);
 
+        const search_username = $("#search-username-input");
+        search_username.keypress(searchUsername);
+
     });
+
+
+    function searchUsername(event) {
+        const curr_server_id = $(event.relatedTarget).attr("data-bs-curr-server-id");
+        const target_name = $(this).val()
+        let target_url = "{% url 'player_list' %}?"
+
+
+        if (event.keyCode == 13){
+            if (curr_server_id) target_url += "server_id="+curr_server_id+"&"
+            if (target_name) target_url += "username="+target_name+"&"
+            console.log(curr_server_id + " -- " + target_name)
+            location.href = target_url
+        }
+    }
 
     async function detailPlayer(event) {
         const player_url = event.relatedTarget.getAttribute('data-bs-player-url');
