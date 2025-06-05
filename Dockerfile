@@ -40,8 +40,8 @@ ENV APP_URL=mcmanager.mraflis.com
 
 # for development build
 FROM base AS prod
-ENV MODE=dev
+ENV MODE=prod
 ENV DB_NAME=mcmanager
-ENV ALLOWED_HOST_LIST=mraflis.com,mcmanager.mraflis.com,192.168.1.65,localhost
+ENV ALLOWED_HOST_LIST=mraflis.com,mcmanager.mraflis.com,192.168.1.65
 ENV APP_URL=mcmanager.mraflis.com
 
