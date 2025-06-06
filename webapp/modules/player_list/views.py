@@ -7,7 +7,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.db import connection
 from webapp.utils.mc_rcon_util import MCRconUtil
-from multiprocessing import Process, Pool
+from multiprocessing import Process, Pool, Manager
 from datetime import datetime
 
 import random, string, json
@@ -390,6 +390,63 @@ class PlayerUnbanManagerView(View):
 
         return JsonResponse(resp_data)
     
+class PlayerSyncManagerView(View):
+    
+    def post(self, request: HttpRequest, *args, **kwargs):
+
+        req_body = request.POST
+
+        server_id = req_body.get("server-id", None)
+        resp_data = {}
+
+        try:
+            player_handler = PlayerHandler()
+            result = player_handler.get_list_player(server_id)
+            player_list:list = result.get("player_list")
+            banned_list:list = result.get("banned_list")
+            online_list:list = result.get("online_list")
+
+            server_details = ServerList.objects.filter(pk=server_id).first()
+            if not server_details:
+                raise "Server not found"
+            
+            for player_raw in player_list:
+                player_data = PlayerList.objects.filter(player_name=player_raw).first()
+                if not player_data:
+                    player_data = PlayerList.objects.create(
+                        player_name = player_raw,
+                        created_by = request.user,
+                        updated_by = request.user,
+                    )
+
+                is_banned = player_raw in banned_list
+                
+                player_mapping = PlayerServerMap.objects.filter(player_invited=player_data, server_joined=server_details).first()
+                if not player_mapping:
+                    player_mapping = PlayerServerMap.objects.create(
+                        player_invited = player_data,
+                        server_joined = server_details,
+                        is_synced = True,
+                        online_status = True,
+                        banned_status = is_banned,
+                        created_by = request.user,
+                        updated_by = request.user,
+                    )
+                elif is_banned:
+                    player_mapping.banned_status = True
+                    player_mapping.save()
+                elif player_mapping.banned_status and not is_banned:
+                    player_mapping.banned_status = False
+                    player_mapping.save()
+
+            resp_data["success"] = True
+
+        except Exception as err:
+            print(f"Error when fetching player on the server: {err.args}")
+            resp_data["success"] = False
+
+        return JsonResponse(resp_data)
+    
 class PlayerHandler():
 
     def add_whitelist_player(self, player_server_id:str):
@@ -411,6 +468,17 @@ class PlayerHandler():
 
         player_mapping_process = Process(target=self.__unban_player, args=[player_server_id])
         player_mapping_process.start()
+
+    def get_list_player(self, server_id):
+
+        manager = Manager()
+        return_dict = manager.dict()
+
+        player_mapping_process = Process(target=self.__player_list, args=[server_id, return_dict])
+        player_mapping_process.start()
+        player_mapping_process.join()
+
+        return return_dict
     
     def __add_whitelist(self, player_server_id:str):
 
@@ -543,6 +611,46 @@ class PlayerHandler():
             
         except Exception as err:
             print("Error when unbanning player: {}".format(err))
+        
+        finally:
+            connection.close()
+    
+    def __player_list(self, server_id:str, return_dict:dict):
+
+        try:
+            connection.close()
+            
+            if not server_id:
+                raise Exception("Server id is empty")
+            
+            server_details = ServerList.objects.filter(pk=server_id).first()
+            if not server_details:
+                raise Exception("Server not found")
+
+            server_address = server_details.server_url
+            server_secret = server_details.server_secret
+            server_is_vanilla = server_details.server_is_vanilla
+
+            mcrcon = MCRconUtil(server_address, server_secret, is_vanilla=server_is_vanilla)
+            player_list = mcrcon.getWhitelist()
+            if not player_list:
+                raise Exception("problem when getting list of player")
+            
+            ban_list = mcrcon.getBanList(player_list)
+            if not player_list:
+                raise Exception("problem when getting list of player")
+
+            return_dict["player_list"] = player_list
+            return_dict["banned_list"] = ban_list
+            return_dict["online_list"] = []
+
+            print("Fetch player list success")
+
+        except Exception as err:
+            return_dict["player_list"] = []
+            return_dict["banned_list"] = []
+            return_dict["online_list"] = []
+            print("Error when fetching player list: {}".format(err))
         
         finally:
             connection.close()

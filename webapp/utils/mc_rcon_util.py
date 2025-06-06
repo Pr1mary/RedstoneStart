@@ -105,6 +105,27 @@ class MCRconUtil:
         self.__command(command_str)
 
         return True
+    
+    def getBanList(self, joined_player: list):
+        
+        command_str = "banlist"
+        resp_cmd = self.__command(command_str)
+        ban_list = []
+        reg_ptrn = r"There are \d+ ban\(s\):"
+
+        if re.search(reg_ptrn, resp_cmd):
+            name_list_str = re.sub(reg_ptrn, "", resp_cmd)
+            for player_name in joined_player:
+                ban_point = 0
+                if "{} was banned by Rcon:".format(player_name) in name_list_str:
+                    ban_point += 1
+                elif "{} was banned by Server:".format(player_name) in name_list_str:
+                    ban_point += 1
+                
+                if ban_point > 0:
+                    ban_list.append(player_name)
+        
+        return ban_list
 
     def setDifficulty(self, difficulty: str):
 

@@ -1,6 +1,10 @@
 
 from django.urls import path
-from .views import PlayerManagerView, PlayerManagerDetailView, PlayerJoinManagerView, PlayerBanManagerView, PlayerUnbanManagerView
+from .views import (
+    PlayerManagerView, PlayerManagerDetailView,
+    PlayerJoinManagerView, PlayerBanManagerView,
+    PlayerUnbanManagerView, PlayerSyncManagerView,
+    )
 
 urlpatterns = [
     path('', PlayerManagerView.as_view(), name="player_list"),
@@ -8,4 +12,5 @@ urlpatterns = [
     path('joinserver', PlayerJoinManagerView.as_view(), name="player_join_server"),
     path('ban', PlayerBanManagerView.as_view(), name="player_server_ban"),
     path('unban', PlayerUnbanManagerView.as_view(), name="player_server_unban"),
+    path('sync', PlayerSyncManagerView.as_view(), name="player_server_sync"),
 ]

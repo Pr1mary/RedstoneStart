@@ -39,6 +39,10 @@
                     </div>
                     <div class="col">
                         <div class="d-flex justify-content-end">
+                            <button class="btn btn-outline-primary" style="margin-right: 2%" onclick="syncPlayer(this)">
+                                <span id="sync-player-spinner" class="spinner-border spinner-border-sm" role="status"></span>
+                                <span id="sync-player" class="mdi mdi-sync"> Sync Player </span>
+                            </button>
                             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addplayermodal">
                                 <span class="mdi mdi-plus-circle-outline"> Add Player
                             </button> 
@@ -174,6 +178,8 @@
         const filter_username = $("#player-status-select");
         filter_username.change(filterUsername)
 
+        $("#sync-player-spinner").hide();
+        $("#sync-player").show();
     });
 
     function filterUsername(event) {
@@ -405,6 +411,41 @@
         }
 
         return csrf_token;
+    }
+
+    function syncPlayer(curr_btn){
+        $(curr_btn).attr("disabled", true);
+
+        $("#sync-player-spinner").show();
+        $("#sync-player").hide();
+
+        const sync_player_url = "{% url 'player_server_sync' %}";
+        const server_id = "{{ curr_server_id }}";
+        const csrf_token = getcsrftoken();
+
+        const body_data = {
+            "server-id": server_id,
+        }
+        const headers = {
+            "X-CSRFToken": csrf_token
+        }
+        const done = $.ajax({
+            "url": sync_player_url,
+            "method": "POST",
+            "headers": headers,
+            "data": body_data
+        }).done(data => {
+            // abort of failed from server
+            if(!data.success){
+                alert("Error: failed to sync player from the server")
+                return
+            }
+
+            location.reload()
+            
+        }).fail(() => {
+            alert("Error: failed to sync player")
+        })
     }
 </script>
 
