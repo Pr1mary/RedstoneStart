@@ -11,7 +11,11 @@
         <div class="card-body">
             {% if messages %}
                 {% for message in messages %}
+                    {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
                     <div class="alert alert-danger" role="alert">
+                    {% elif message.level == DEFAULT_MESSAGE_LEVELS.INFO %}
+                    <div class="alert alert-success" role="alert">
+                    {% endif %}
                         {{ message }}
                     </div>
                 {% endfor %}
