@@ -1,0 +1,36 @@
+services:
+  db:
+    image: mariadb:lts
+    restart: unless-stopped
+    container_name: mariadb
+    environment:
+      - MARIADB_ROOT_PASSWORD=Test12345
+      - MARIADB_DATABASE=redstonestart
+    ports:
+      - '3306:3306'
+    healthcheck:
+      test: "/usr/bin/mariadb --user=root --password=Test12345 --execute \"SHOW DATABASES;\""
+      interval: 2s
+      timeout: 20s
+      retries: 10
+  
+  webapp:
+    build: .
+    image: redstonestart
+    restart: unless-stopped
+    container_name: redstonestart
+    environment:
+      - MODE=dev
+      - DB_NAME=redstonestart
+      - DB_USER=root
+      - DB_PASSWORD=Test12345
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - APP_URL=localhost:8080
+      - DJANGO_SECRET="change-this-later-okay"
+      - ALLOWED_HOST_LIST="127.0.0.1,localhost,www.yoursite.com,yoursite.com"
+    ports:
+      - '8000:8000'
+    depends_on:
+      db:
+        condition: service_healthy

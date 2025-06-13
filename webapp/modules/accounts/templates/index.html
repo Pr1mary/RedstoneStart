@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block bodydoc %}
+
+<div id="content container-fluid ">
+
+    <div class="card" style="width: 30rem; left:50%; transform:translate(-50%, 0);">
+        <div class="card-header">
+            <strong>User Details</strong>
+        </div>
+        <div class="card-body">
+            {% if messages %}
+                {% for message in messages %}
+                    {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+                    <div class="alert alert-danger" role="alert">
+                    {% elif message.level == DEFAULT_MESSAGE_LEVELS.INFO %}
+                    <div class="alert alert-success" role="alert">
+                    {% endif %}
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            <form id="player_join_server" action="{% url 'details_info' %}" method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <strong>User Info</strong>
+                </div>
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username:</label>
+                    <input class="form-control" type="text" name="username" id="username" disabled value="{{ curr_username }}">
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email:</label>
+                    <input class="form-control" type="text" name="email" id="email" value="{{ curr_email }}">
+                    <small class="text-danger" id="match-email-alert">Email is not valid</small>
+                </div>
+                <br>
+                <div class="mb-3">
+                    <strong>Change Password</strong>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">New Password:</label>
+                    <input class="form-control" type="password" name="password" id="password">
+                </div>
+                <div class="mb-3">
+                    <label for="confirm-password" class="form-label">Confirm Password:</label>
+                    <input class="form-control" type="password" name="confirm-password" id="confirm-password">
+                    <small class="text-danger" id="match-pass-alert">Confirm password and password does not match!</small>
+                </div>
+                <br>
+                <div class="mb-3">
+                    <input id="submit-btn" type="submit" class="form-control md-3 btn btn-primary" value="Update Data">
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    <!-- set match pass and email to hidden before page completely loaded -->
+    $("#match-pass-alert").hide();
+    $("#match-email-alert").hide();
+
+    $("#password").on("input", passChecking);
+
+    $("#confirm-password").on("input", passChecking);
+
+    $("#email").on("input", () => {
+        const email = $("#email").val();
+        const email_regex = /^[\w\-\.]+@([\w-]+\.)+[\w-]{2,}$/gm;
+
+        if(email_regex.exec(email)){
+            $("#match-email-alert").hide();
+        }else{
+            $("#match-email-alert").show();
+        }
+    });
+
+    function passChecking() {
+        const curr_pass = $("#password").val();
+        const ver_pass = $("#confirm-password").val();
+        let disable_submit = false;
+
+        if(curr_pass.length > 0){
+            $("#confirm-password").prop('required',true);
+        }else{
+            $("#confirm-password").prop('required',false);
+        }
+        
+        if(ver_pass.length > 0){
+            $("#password").prop('required',true);
+        }else{
+            $("#password").prop('required',false);
+        }
+
+        if(ver_pass !== curr_pass && ver_pass.length > 0 && curr_pass.length > 0){
+            $("#match-pass-alert").show();
+            disable_submit = true;
+        }else if((ver_pass.length > 0 && curr_pass.length == 0) || (ver_pass.length == 0 && curr_pass.length > 0)){
+            disable_submit = true;
+        }else{
+            $("#match-pass-alert").hide();
+            disable_submit = false;
+        }
+
+        if(disable_submit){
+            $("#submit-btn").prop('disabled',true);
+        }else{
+            $("#submit-btn").prop('disabled',false);
+        }
+
+    }
+</script>
+
+{% endblock %}

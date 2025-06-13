@@ -9,6 +9,17 @@
             <strong>User Login</strong>
         </div>
         <div class="card-body">
+            {% if messages %}
+                {% for message in messages %}
+                    {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+                    <div class="alert alert-danger" role="alert">
+                    {% elif message.level == DEFAULT_MESSAGE_LEVELS.INFO %}
+                    <div class="alert alert-success" role="alert">
+                    {% endif %}
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
             <form id="player_join_server" action="{% url 'auth_login' %}" method="post">
                 {% csrf_token %}
                 <div class="mb-3">
@@ -23,6 +34,9 @@
                     <input type="submit" class="form-control md-3 btn btn-primary" value="Login">
                 </div>
             </form>
+        </div>
+        <div class="card-footer">
+            <small>Do not have an account? <a href="{% url 'auth_register' %}">register here</a></small>
         </div>
     </div>
 

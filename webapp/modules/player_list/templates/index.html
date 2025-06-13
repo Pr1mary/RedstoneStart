@@ -10,7 +10,7 @@
                 <ul class="nav nav-tabs card-header-tabs">
                     {% for server in server_list %}
                         <li class="nav-item">
-                            <a href="/playermanager/?server_id={{server.id}}" class="nav-link {% if server.active %} active {% endif %}">
+                            <a href="{% url 'player_list' %}?server_id={{server.id}}" class="nav-link {% if server.active %} active {% endif %}">
                                 {{ server.name }}
                             </a>
                         </li>
@@ -18,10 +18,36 @@
                 </ul>
             </div>
             <div class="card-body">
-                <div class="d-flex justify-content-end">
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addplayermodal">
-                        <span class="mdi mdi-plus-circle-outline"> Add Player
-                    </button>    
+                <div class="row">
+                    <div class="col-2">
+                        <select class="form-select" aria-label="Status select" id="player-status-select">
+                            <option value="ALL" {% if not curr_filter_status %} selected {% endif %}>All</option>
+                            <option value="OUTSTANDING" {% if curr_filter_status == "OUTSTANDING" %} selected {% endif %}>Outstanding</option>
+                            <option value="BANNED" {% if curr_filter_status == "BANNED" %} selected {% endif %}>Banned</option>
+                            <option value="FAILED" {% if curr_filter_status == "FAILED" %} selected {% endif %}>Failed</option>
+                        </select>
+                    </div>
+                    <div class="col-5">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text mdi mdi-magnify" id="basic-addon1"></span>
+                            <input id="search-username-input" type="text"
+                            class="form-control" placeholder="Search username"
+                            aria-label="Search username" aria-describedby="basic-addon1"
+                            data-bs-curr-server-id="{{ curr_server_id }}"
+                            value="{{ curr_username_target }}">
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="d-flex justify-content-end">
+                            <button class="btn btn-outline-primary" style="margin-right: 2%" onclick="syncPlayer(this)">
+                                <span id="sync-player-spinner" class="spinner-border spinner-border-sm" role="status"></span>
+                                <span id="sync-player" class="mdi mdi-sync"> Sync Player </span>
+                            </button>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addplayermodal">
+                                <span class="mdi mdi-plus-circle-outline"> Add Player
+                            </button> 
+                        </div>
+                    </div>
                 </div>
                 <table class="table table-hover">
                     <thead>
@@ -31,16 +57,24 @@
                         <th></th>
                     </thead>
                     <tbody>
-                        {% for player in player_list %}
+                        {% for player_server in player_server_list %}
                         <tr>
-                            <td class="">{{ player.name }}</td>
-                            <td>{{ player.joined_at }}</td>
-                            <td><span class="badge text-bg-success">Online</span></td>
-                            <!-- <td><span class="badge text-bg-danger">Offline</span></td> -->
+                            <td class="">{{ player_server.name }}</td>
+                            <td>{{ player_server.joined_at }}</td>
+                            <td>
+                            {% if player_server.status == "BANNED"%}
+                                <span class="badge text-bg-danger">Banned</span>
+                            {% elif player_server.status == "FAILED" %}
+                                <span class="badge text-bg-warning">Failed</span>
+                            {% else %}
+                                <span class="badge text-bg-primary">Outstanding</span>
+                            {% endif %}
+                            </td>
                             <td>
                                 <button class="btn btn-outline-primary"
                                 data-bs-toggle="modal" data-bs-target="#detailplayermodal"
-                                data-bs-player-url="{% url 'player_details' player.id %}">
+                                data-bs-player-url="{% url 'player_details' player_server.id %}"
+                                data-bs-player-server-id="{{ player_server.id }}">
                                     Details
                                 </button>
                             </td>
@@ -48,7 +82,7 @@
                         {% endfor %}
                     </tbody>
                 </table>
-                {% if not player_list %}
+                {% if not player_server_list %}
                 <div class="container text-center">
                     <br>
                     <p>
@@ -78,7 +112,7 @@
                     {% csrf_token %}
                     <div class="mb-3">
                         <label for="player-name" class="col-form-label">Player Name:</label>
-                        <input type="text" class="form-control" id="player-name-add" name="player-name" required>
+                        <input type="text" class="form-control" id="player-name-add" name="player-name" maxlength="16" required>
                     </div>
                     <div class="mb-3">
                         <label for="server-target" class="col-form-label">Server Name:</label>
@@ -116,10 +150,18 @@
                     <label for="join-date" class="col-form-label">Joined Since:</label>
                     <input type="text" class="form-control" id="join-date-edit" name="join-date" disabled>
                 </div>
+                <div class="mb-3">
+                    <label for="join-date" class="col-form-label">Status:</label>
+                    <span id="detail-status-banned" class="badge text-bg-danger" style="display: none;">Banned</span>
+                    <span id="detail-status-failed" class="badge text-bg-warning" style="display: none;">Failed</span>
+                    <span id="detail-status-outstanding" class="badge text-bg-primary" style="display: none;">Outstanding</span>
+                </div>
             </div>
             <div class="modal-footer">
+                <button type="button" class="btn btn-warning" id="ban-player-btn" onclick="banPlayer()" style="display: none;"><span class="mdi mdi-cancel"></span> Ban</button>
+                <button type="button" class="btn btn-primary" id="unban-player-btn" onclick="unbanPlayer()" style="display: none;"><span class="mdi mdi-information-box-outline"></span> Unban</button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-danger" id="delete-player-btn" onclick="deletePlayer()">Remove Player</button>
+                <button type="button" class="btn btn-danger" id="delete-player-btn" onclick="deletePlayer()"><span class="mdi mdi-trash-can-outline"></span> Remove</button>
             </div>
         </div>
     </div>
@@ -127,14 +169,68 @@
 
 <script>
     $("document").ready(() => {
-        const detail_modal = $("#detailplayermodal")
+        const detail_modal = $("#detailplayermodal");
         detail_modal.on("show.bs.modal", detailPlayer);
 
+        const search_username = $("#search-username-input");
+        search_username.keypress(searchUsername);
+
+        const filter_username = $("#player-status-select");
+        filter_username.change(filterUsername)
+
+        $("#sync-player-spinner").hide();
+        $("#sync-player").show();
     });
+
+    function filterUsername(event) {
+        const status_val = $(this).val();
+
+        let curr_url = $(location).attr("href");
+        let target_url = curr_url.split("?")[0] + "?";
+        let query_url_str = (curr_url.split("?").length > 1)? curr_url.split("?")[1]:"";
+        let query_url_list = (query_url_str)?query_url_str.split("&"):[];
+
+        let new_query_url_list = []
+
+        for(let query_url of query_url_list){
+            if(!query_url) continue;
+            if(query_url.includes("status=")) continue;
+            target_url += query_url+"&";
+        }
+        if (status_val && status_val !== "ALL") target_url += "status="+status_val+"&"
+        location.href = target_url
+    }
+
+    function searchUsername(event) {
+        const curr_server_id = $(event.relatedTarget).attr("data-bs-curr-server-id");
+        const target_name = $(this).val()
+        // let target_url = "{% url 'player_list' %}?"
+        let curr_url = $(location).attr("href");
+        let target_url = curr_url.split("?")[0] + "?";
+        let query_url_str = (curr_url.split("?").length > 1)? curr_url.split("?")[1]:"";
+        let query_url_list = (query_url_str)?query_url_str.split("&"):[];
+
+        let new_query_url_list = []
+
+        if (event.keyCode == 13){
+            for(let query_url of query_url_list){
+                if(!query_url) continue;
+                if(query_url.includes("server_id=")) continue;
+                if(query_url.includes("username=")) continue;
+                target_url += query_url+"&";
+            }
+            if (curr_server_id) target_url += "server_id="+curr_server_id+"&"
+            if (target_name) target_url += "username="+target_name+"&"
+            location.href = target_url
+        }
+    }
 
     async function detailPlayer(event) {
         const player_url = event.relatedTarget.getAttribute('data-bs-player-url');
-        const delete_player_btn = $("#delete-player-btn")
+        const delete_player_btn = $("#delete-player-btn");
+        const ban_player_btn = $("#ban-player-btn");
+        const unban_player_btn = $("#unban-player-btn");
+        const curr_player_server_id = event.relatedTarget.getAttribute("data-bs-player-server-id");
 
         try{
             const resp = await fetch(player_url);
@@ -150,11 +246,122 @@
             const join_date_form = $("#join-date-edit");
             join_date_form.val(resp_data["created_at"]);
 
+            let curr_player_status = "";
+            const server_list = resp_data["server_list"];
+            for(let server of server_list){
+                
+                if(server["server_player_id"].toString() !== curr_player_server_id.toString()) continue;
+
+                curr_player_status = server["player_status"];
+                break;
+            }
+
+            const status_outstanding_label = $("#detail-status-outstanding")
+            const status_banned_label = $("#detail-status-banned")
+            const status_failed_label = $("#detail-status-failed")
+            switch(curr_player_status){
+                case "BANNED":
+                    unban_player_btn.show();
+                    ban_player_btn.hide();
+
+                    status_outstanding_label.hide();
+                    status_banned_label.show();
+                    status_failed_label.hide();
+                    break;
+                case "FAILED":
+                    unban_player_btn.hide();
+                    ban_player_btn.show();
+
+                    status_outstanding_label.hide();
+                    status_banned_label.hide();
+                    status_failed_label.show();
+                    break;
+                default:
+                    unban_player_btn.hide();
+                    ban_player_btn.show();
+
+                    status_outstanding_label.show();
+                    status_banned_label.hide();
+                    status_failed_label.hide();
+            }
+
+            ban_player_btn.data("data-bs-player-server-id", curr_player_server_id);
+            unban_player_btn.data("data-bs-player-server-id", curr_player_server_id);
             delete_player_btn.data("data-bs-player-url", player_url);
 
         }catch(err){
             console.log(err.message);
         }
+    }
+
+    function banPlayer(){
+        const ban_player_url = "{% url 'player_server_ban' %}";
+        const player_server_id = $("#ban-player-btn").data("data-bs-player-server-id");
+        const ban_question = "What is the reason for the ban?";
+        const ban_answer = prompt(ban_question, "Banned by an operator");
+        const csrf_token = getcsrftoken();
+
+        if(!ban_answer){
+            return;
+        }
+        const body_data = {
+            "player-server-id": player_server_id,
+            "reason-text": ban_answer 
+        }
+        const headers = {
+            "X-CSRFToken": csrf_token
+        }
+        const done = $.ajax({
+            "url": ban_player_url,
+            "method": "POST",
+            "headers": headers,
+            "data": body_data
+        }).done(data => {
+            // abort of failed from server
+            if(!data.banned){
+                alert("Error: failed to ban player from the server")
+                return
+            }
+
+            location.reload()
+            
+        }).fail(() => {
+            alert("Error: failed to ban player")
+        })
+    }
+
+    function unbanPlayer(){
+        const unban_player_url = "{% url 'player_server_unban' %}";
+        const player_server_id = $("#unban-player-btn").data("data-bs-player-server-id");
+        const confirm_text = "Are you sure do you want to unban this player from this server?";
+        const csrf_token = getcsrftoken();
+        
+        if(!confirm(confirm_text)){
+            return;
+        }
+        const body_data = {
+            "player-server-id": player_server_id,
+        }
+        const headers = {
+            "X-CSRFToken": csrf_token
+        }
+        const done = $.ajax({
+            "url": unban_player_url,
+            "method": "POST",
+            "headers": headers,
+            "data": body_data
+        }).done(data => {
+            // abort of failed from server
+            if(!data.unbanned){
+                alert("Error: failed to unban player from the server")
+                return
+            }
+
+            location.reload()
+            
+        }).fail(() => {
+            alert("Error: failed to unban player")
+        })
     }
 
     function deletePlayer(){
@@ -204,6 +411,41 @@
         }
 
         return csrf_token;
+    }
+
+    function syncPlayer(curr_btn){
+        $(curr_btn).attr("disabled", true);
+
+        $("#sync-player-spinner").show();
+        $("#sync-player").hide();
+
+        const sync_player_url = "{% url 'player_server_sync' %}";
+        const server_id = "{{ curr_server_id }}";
+        const csrf_token = getcsrftoken();
+
+        const body_data = {
+            "server-id": server_id,
+        }
+        const headers = {
+            "X-CSRFToken": csrf_token
+        }
+        const done = $.ajax({
+            "url": sync_player_url,
+            "method": "POST",
+            "headers": headers,
+            "data": body_data
+        }).done(data => {
+            // abort of failed from server
+            if(!data.success){
+                alert("Error: failed to sync player from the server")
+                return
+            }
+
+            location.reload()
+            
+        }).fail(() => {
+            alert("Error: failed to sync player")
+        })
     }
 </script>
 

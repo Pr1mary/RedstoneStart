@@ -1,40 +1,40 @@
 <nav class="navbar navbar-light bg-light p-3">
-    <div class="d-flex col-12 col-md-3 col-lg-2 mb-2 mb-lg-0 flex-wrap flex-md-nowrap justify-content-between">
-        <a class="navbar-brand" href="#">
-            MC Server Manager
-        </a>
-        <button class="navbar-toggler d-md-none collapsed mb-3" type="button" data-toggle="collapse" data-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </div>
-    <div class="col-12 col-md-5 col-lg-8 d-flex align-items-center justify-content-md-end mt-3 mt-md-0">
-        <div class="dropdown">
-            <button class="btn btn-secondary dropdown-toggle" type="button"
-            id="dropdownMenuButton" data-bs-toggle="dropdown"
-            data-bs-auto-close="true" aria-expanded="false">
-              Hello, {{ user }}
-            </button>
-            <ul class="dropdown-menu dropdown-menu-lg-end" aria-labelledby="dropdownMenuButton">
-              <li>
-                <a class="dropdown-item disabled" href="#">
-                    Account Details
-                </a>
-              </li>
-              <li>
-                <a class="dropdown-item disabled" href="#">
-                    Settings
-                </a>
-              </li>
-              <li><hr class="dropdown-divider"></li>
-              <li>
-                <form method="POST" action="{% url 'auth_logout' %}">
-                  {% csrf_token %}
-                  <button class="dropdown-item link-danger btn btn-outline-danger" type="submit">
-                    <span class="mdi mdi-logout"></span> Logout
-                  </button>
-                </form>
-              </li>
-            </ul>
-        </div>
-    </div>
-  </nav>
+  <div class="d-flex col-12 col-md-3 col-lg-2 mb-2 mb-lg-0 flex-wrap flex-md-nowrap justify-content-between">
+      <a class="navbar-brand" href="#">
+          MC Server Manager
+      </a>
+      <button class="navbar-toggler d-md-none collapsed mb-3" type="button" data-toggle="collapse" data-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+      </button>
+  </div>
+  <div class="col-12 col-md-5 col-lg-8 d-flex align-items-center justify-content-md-end mt-3 mt-md-0">
+      <div class="dropdown">
+          <button class="btn btn-secondary dropdown-toggle" type="button"
+          id="dropdownMenuButton" data-bs-toggle="dropdown"
+          data-bs-auto-close="true" aria-expanded="false">
+            Hello, {{ user }}
+          </button>
+          <ul class="dropdown-menu dropdown-menu-lg-end" aria-labelledby="dropdownMenuButton">
+            <li>
+              <a class="dropdown-item" href="{% url 'details_info' %}">
+                  Account Details
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item disabled" href="#">
+                  Settings
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <form method="POST" action="{% url 'auth_logout' %}">
+                {% csrf_token %}
+                <button class="dropdown-item link-danger btn btn-outline-danger" type="submit">
+                  <span class="mdi mdi-logout"></span> Logout
+                </button>
+              </form>
+            </li>
+          </ul>
+      </div>
+  </div>
+</nav>

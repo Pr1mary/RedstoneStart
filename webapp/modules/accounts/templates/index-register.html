@@ -1,0 +1,83 @@
+{% extends 'base_clean.html' %}
+
+{% block bodydoc %}
+
+<div id="content container ">
+
+    <div class="card" style="width: 18rem; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
+        <div class="card-header">
+            <strong>User Register</strong>
+        </div>
+        <div class="card-body">
+            {% if messages %}
+                {% for message in messages %}
+                    {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+                    <div class="alert alert-danger" role="alert">
+                    {% elif message.level == DEFAULT_MESSAGE_LEVELS.INFO %}
+                    <div class="alert alert-success" role="alert">
+                    {% endif %}
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            <form id="player_join_server" action="{% url 'auth_register' %}" method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email:</label>
+                    <input class="form-control" type="text" name="email" id="email" required>
+                    <small class="text-danger" id="match-email-alert">Email is not valid</small>
+                </div>
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username:</label>
+                    <input class="form-control" type="text" name="username" id="username" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password:</label>
+                    <input class="form-control" type="password" name="password" id="password" required>
+                </div>
+                <div class="mb-3">
+                    <label for="confirm-password" class="form-label">Confirm Password:</label>
+                    <input class="form-control" type="password" name="confirm-password" id="confirm-password" required>
+                    <small class="text-danger" id="match-pass-alert">Confirm password and password does not match!</small>
+                </div>
+                <div class="mb-3">
+                    <input type="submit" class="form-control md-3 btn btn-primary" value="Register">
+                </div>
+            </form>
+        </div>
+        <div class="card-footer">
+            <small>Already have an account? <a href="{% url 'auth_login' %}">login here</a></small>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    <!-- set match pass and email to hidden before page completely loaded -->
+    $("#match-pass-alert").hide();
+    $("#match-email-alert").hide();
+
+    $("#confirm-password").on("input", () => {
+        const ver_pass = $("#password").val();
+        const curr_pass = $("#confirm-password").val();
+
+        if(ver_pass !== curr_pass){
+            $("#match-pass-alert").show();
+        }else{
+            $("#match-pass-alert").hide();
+        }
+    });
+
+    $("#email").on("input", () => {
+        const email = $("#email").val();
+        const email_regex = /^[\w\-\.]+@([\w-]+\.)+[\w-]{2,}$/gm;
+
+        if(email_regex.exec(email)){
+            $("#match-email-alert").hide();
+        }else{
+            $("#match-email-alert").show();
+        }
+    });
+</script>
+
+{% endblock %}

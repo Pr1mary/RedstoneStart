@@ -4,9 +4,17 @@
 
 <div id="content container-fluid ">
 
-    <button class="btn btn-primary pull-right" data-bs-toggle="modal" data-bs-target="#addservermodal">
-        <span class="mdi mdi-plus-circle-outline"> Add Server
-    </button>
+    <div class="d-flex justify-content-between">
+        <button class="btn btn-primary" id="add-server-btn" data-bs-toggle="modal" data-bs-target="#addservermodal">
+            <span class="mdi mdi-plus-circle-outline"> Add Server </span>
+        </button>
+    
+        <button class="btn btn-secondary" id="refresh-btn" onclick="refreshStatus(this.id)">
+            <span id="refresh-spinner" class="spinner-border spinner-border-sm" role="status"></span>
+            <span id="refresh-logo" class="mdi mdi-refresh"> Refresh </span>
+        </button>    
+    
+    </div>
     
     <div class="row">
         
@@ -16,6 +24,9 @@
             <div class="card-body">
                 <h5 class="card-title">
                     <strong>{{ server.name }}</strong>
+                    <span class="badge text-bg-danger" {% if server.active %} style="display: none;" {% endif %}>
+                        Offline
+                    </span>
                 </h5>
                 <p class="card-text">
                     <a href="{{ server.url }}">{{ server.url }}</a>
@@ -27,7 +38,10 @@
                             Invite Details
                         </button>
                     {% else %}
-                        <button class="btn btn-success" onclick="generateCode('{% url 'server_invite' server.id %}')">Open Invite</button>
+                        <button class="btn btn-success"
+                        onclick="generateCode('{% url 'server_invite' server.id %}')"
+                        {% if not server.active %} disabled {% endif %}
+                        >Open Invite</button>
                     {% endif %}
                     <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#detailservermodal" data-bs-server-url="{% url 'server_details' server.id %}">Server Details</button>
                 </div>
@@ -63,11 +77,47 @@
                         <label for="server-address" class="col-form-label">Server Address:</label>
                         <input type="text" class="form-control" id="server-address" name="server-address" required>
                     </div>
+                    <div class="mb-3">
+                        <label for="server-secret" class="col-form-label">Server Secret:</label>
+                        <input type="password" class="form-control" id="server-secret" name="server-secret" required>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="submit" class="btn btn-primary" form="add-server-form">Add Server</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="editservermodal" class="modal fade" tabindex="-1" aria-labelledby="editservermodallabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="editservermodallabel">Edit Server details</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-server-form">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="server-name" class="col-form-label">Server Name:</label>
+                        <input type="text" class="form-control" id="edit-server-name" name="server-name">    
+                    </div>
+                    <div class="mb-3">
+                        <label for="server-address" class="col-form-label">Server Address:</label>
+                        <input type="text" class="form-control" id="edit-server-address" name="server-address">
+                    </div>
+                    <div class="mb-3">
+                        <label for="server-secret" class="col-form-label">New Server Secret:</label>
+                        <input type="password" class="form-control" id="edit-server-secret" name="server-secret" placeholder="not required, only to change rcon secret">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="update-server-btn" onclick="editServer()">Update Data</button>
             </div>
         </div>
     </div>
@@ -77,21 +127,29 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h1 class="modal-title fs-5" id="detailservermodallabel">Current Server Details</h1>
+                <h1 class="modal-title fs-5" id="detailservermodallabel">
+                    Current Server Details 
+                    <a href="#" class="edit-server-details-btn" data-bs-toggle="modal" data-bs-target="#editservermodal"><span class="mdi mdi-pencil-outline"></span></a>
+                </h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
                     <label for="server-name" class="col-form-label">Server Name:</label>
-                    <input type="text" class="form-control" id="server-name-edit" name="server-name" disabled>    
+                    <input type="text" class="form-control" id="server-name-detail" name="server-name" disabled>    
                 </div>
                 <div class="mb-3">
                     <label for="server-address" class="col-form-label">Server Address:</label>
-                    <input type="text" class="form-control" id="server-address-edit" name="server-address" disabled>
+                    <input type="text" class="form-control" id="server-address-detail" name="server-address" disabled>
                 </div>
                 <div class="mb-3">
                     <label for="server-players" class="col-form-label">Total Joined Players:</label>
-                    <input type="text" class="form-control" id="server-players-edit" name="server-players" disabled>
+                    <input type="text" class="form-control" id="server-players-detail" name="server-players" disabled>
+                </div>
+                <div class="mb-3">
+                    <label for="server-players" class="col-form-label">Server Status:</label>
+                    <span id="server-status-online" class="badge text-bg-success">Online</span>
+                    <span id="server-status-offline" class="badge text-bg-danger">Offline</span>
                 </div>
             </div>
             <div class="modal-footer">
@@ -116,7 +174,7 @@
                 </div>
                 <div class="mb-3">
                     <label for="invite-url" class="col-form-label">Invite URL:</label>
-                    <input type="text" class="form-control" id="invite-url-details" name="invite-url" disabled>    
+                    <input type="text" class="form-control user-select-all" id="invite-url-details" name="invite-url" disabled>    
                 </div>
             </div>
             <div class="modal-footer">
@@ -129,13 +187,69 @@
 
 <script>
     $("document").ready(() => {
-        const detail_modal = $("#detailservermodal")
+        const detail_modal = $("#detailservermodal");
         detail_modal.on("show.bs.modal", detailServer);
 
-        
-        const invite_modal = $("#serverinvitemodal")
+        const invite_modal = $("#serverinvitemodal");
         invite_modal.on("show.bs.modal", inviteDetail);
+
+        const refresh_spinner = $("#refresh-spinner");
+        refresh_spinner.hide();
+        const refresh_logo = $("#refresh-logo");
+        refresh_logo.show();
     });
+
+    function refreshStatus(btn_id){
+        const addServerBtn = $("#add-server-btn")
+        addServerBtn.prop("disabled", true)
+
+        const refresh_btn = $("#"+btn_id)
+        refresh_btn.prop("disabled", true)
+
+        const refresh_spinner = $("#refresh-spinner");
+        refresh_spinner.show();
+        const refresh_logo = $("#refresh-logo");
+        refresh_logo.hide();
+
+        const refresh_url = "{% url 'server_refresh_status' %}";
+        const curr_page = "{{ data.page }}"
+        const data_limit = "{{ data.limit }}"
+        const csrf_token = getcsrftoken();
+
+        const headers = {
+            "X-CSRFToken": csrf_token
+        }
+        const body_data = {
+            "curr_page": curr_page,
+            "data_limit": data_limit
+        }
+        const done = $.ajax({
+            "url": refresh_url,
+            "method": "post",
+            "headers": headers,
+            "contentType": "application/json; charset=utf-8",
+            "data": JSON.stringify(body_data),
+        }).done(data => {
+            // abort of failed from server
+            if(!data.status_done){
+                alert("Error: failed to generate invite code from server")
+                return
+            }
+            
+            // refresh window after getting latest server status
+            location.reload()
+        }).fail(() => {
+            alert("Error: failed to generate invite code from server")
+        }).always(() => {
+            const refresh_btn = $("#"+btn_id)
+            refresh_btn.prop("disabled", false)
+            const refresh_spinner = $("#refresh-spinner");
+            refresh_spinner.hide();
+            const refresh_logo = $("#refresh-logo");
+            refresh_logo.show();
+        })
+
+    }
 
     function generateCode(server_path){
         const generate_invite_code_url = server_path;
@@ -161,15 +275,14 @@
         }).done(data => {
             // abort of failed from server
             if(!data.invite_code){
-                alert("Error: failed to generate invite code from server")
+                alert("Error: failed to refresh server status from server")
                 return
             }
             
             // refresh page after delete success
-            alert("Invite mode started")
             location.reload()
         }).fail(() => {
-            alert("Error: failed to generate invite code from server")
+            alert("Error: failed to refresh server status")
         })
     }
 
@@ -243,6 +356,7 @@
     async function detailServer(event) {
         const server_url = event.relatedTarget.getAttribute('data-bs-server-url');
         const delete_server_btn = $("#delete-server-btn")
+        const update_server_btn = $("#update-server-btn")
 
         try{
             const resp = await fetch(server_url);
@@ -252,20 +366,85 @@
 
             const resp_data = await resp.json();
 
-            const server_name_form = $("#server-name-edit");
+            // section for edit server details
+            const edit_server_name_form = $("#edit-server-name");
+            edit_server_name_form.val(resp_data["name"]);
+
+            const edit_server_url_form = $("#edit-server-address");
+            edit_server_url_form.val(resp_data["url"]);
+
+            // section for server details
+            const server_name_form = $("#server-name-detail");
             server_name_form.val(resp_data["name"]);
 
-            const server_url_form = $("#server-address-edit");
+            const server_url_form = $("#server-address-detail");
             server_url_form.val(resp_data["url"]);
 
-            const server_players_form = $("#server-players-edit");
+            const server_players_form = $("#server-players-detail");
             server_players_form.val(resp_data["players"]);
 
+            const is_online_badge = $("#server-status-online");
+            const is_offline_badge = $("#server-status-offline");
+            const is_online = resp_data["active"];
+            if(is_online){
+                is_online_badge.show();
+                is_offline_badge.hide();
+            }else{
+                is_online_badge.hide();
+                is_offline_badge.show();
+            }
+
             delete_server_btn.data("data-bs-server-url", server_url);
+            update_server_btn.data("data-bs-server-url", server_url);
 
         }catch(err){
             console.log(err.message);
         }
+    }
+
+    function editServer(){
+        const delete_server_url = $("#update-server-btn").data("data-bs-server-url");
+        const confirm_text = "Are you sure do you want to update this server data?";
+        
+        const edit_server_name_form = $("#edit-server-name");
+        const edit_server_url_form = $("#edit-server-address");
+        const edit_server_secret_form = $("#edit-server-secret");
+
+        const csrf_token = getcsrftoken();
+        
+        if(!confirm(confirm_text)){
+            return;
+        }
+
+        const headers = {
+            "X-CSRFToken": csrf_token
+        };
+        const body_data = {
+            "server_name": edit_server_name_form.val(),
+            "server_url": edit_server_url_form.val(),
+        };
+        if(edit_server_secret_form.val()){
+            body_data["server_secret"] = edit_server_secret_form.val();
+        }
+        console.log("here is the body: "+body_data)
+        const done = $.ajax({
+            "url": delete_server_url,
+            "method": "PUT",
+            "headers": headers,
+            "contentType": "application/json; charset=utf-8",
+            "data": JSON.stringify(body_data),
+        }).done(data => {
+            // abort of failed from server
+            if(!data.updated){
+                alert("Error: failed to delete server")
+                return
+            }
+            
+            // refresh page after delete success
+            location.reload()
+        }).fail(() => {
+            alert("Error: failed to delete server")
+        })
     }
 
     function deleteServer(){
