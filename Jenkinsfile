@@ -1,8 +1,8 @@
 pipeline {
-    agent any
+    agent { label 'linux-docker' }
 
     environment {
-        DOCKER_IMAGE = 'django-app'
+        DOCKER_IMAGE = 'redstonestart'
         DOCKER_TAG = 'latest'
     }
 
@@ -31,13 +31,13 @@ pipeline {
             }
         }
 
-        stage('Clean Up') {
-            steps {
-                script {
-                    sh "docker rmi ${DOCKER_IMAGE}:${DOCKER_TAG}"
-                }
-            }
-        }
+        // stage('Clean Up') {
+        //     steps {
+        //         script {
+        //             sh "docker rmi ${DOCKER_IMAGE}:${DOCKER_TAG}"
+        //         }
+        //     }
+        // }
     }
 
     post {
