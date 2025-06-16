@@ -16,7 +16,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                    sh "docker build --target=prod -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
                 }
             }
         }
@@ -31,13 +31,13 @@ pipeline {
             }
         }
 
-        // stage('Clean Up') {
-        //     steps {
-        //         script {
-        //             sh "docker rmi ${DOCKER_IMAGE}:${DOCKER_TAG}"
-        //         }
-        //     }
-        // }
+        stage('Deploy') {
+            steps {
+                script {
+                    sh "docker run ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                }
+            }
+        }
     }
 
     post {
