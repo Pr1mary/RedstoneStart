@@ -5,6 +5,9 @@ pipeline {
         DOCKER_IMAGE = 'redstonestart'
         DOCKER_TAG = 'latest'
         RESTART_POLICY = 'unless-stopped'
+        TARGET_PORT = '8000'
+        CONTAINER_NAME = 'redstonestart'
+        DB_PORT = '3306'
     }
 
     stages {
@@ -34,16 +37,34 @@ pipeline {
         
         stage('DB Migration') {
             steps {
-                script {
-                    sh "docker run --rm ${DOCKER_IMAGE}:${DOCKER_TAG} -e DB_USER=${DB_USER_MIGRATOR} -e DB_PASSWORD=${DB_PASSWORD_MIGRATOR} -e DB_HOST=${DB_HOST_MIGRATOR} python manage.py migrate --noinput"
+                withCredentials([
+                    string(credentialsId: 'DB_REDSTONE_USER_MIGRATOR', variable: 'DB_USER'),
+                    string(credentialsId: 'DB_REDSTONE_PASS_MIGRATOR', variable: 'DB_PASSWORD'),
+                    string(credentialsId: 'DB_REDSTONE_HOST', variable: 'DB_HOST')
+                ]){
+                    if (!DB_USER || !DB_PASSWORD || !DB_HOST) {
+                        error "Missing credentials for database migration!"
+                    }
+                    sh "docker run --rm ${DOCKER_IMAGE}:${DOCKER_TAG} -e DB_USER=${DB_USER}\
+                    -e DB_PASSWORD=${DB_PASSWORD} -e DB_HOST=${DB_HOST} -e DB_PORT=${DB_PORT}\
+                    python manage.py migrate --noinput"
                 }
             }
         }
 
         stage('Deploy') {
             steps {
-                script {
-                    sh "docker -p ${TARGET_PORT}:8000 --name ${CONTAINER_NAME} -e DB_USER=${DB_USER} -e DB_PASSWORD=${DB_PASSWORD} -e DB_HOST=${DB_HOST} -e DB_PORT=${DB_PORT} --restart=${RESTART_POLICY} -d run ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                withCredentials([
+                    string(credentialsId: 'DB_REDSTONE_USER', variable: 'DB_USER'),
+                    string(credentialsId: 'DB_REDSTONE_PASS', variable: 'DB_PASSWORD'),
+                    string(credentialsId: 'DB_REDSTONE_HOST', variable: 'DB_HOST')
+                ]){
+                    if (!DB_USER || !DB_PASSWORD || !DB_HOST) {
+                        error "Missing credentials for running the application!"
+                    }
+                    sh "docker -p ${TARGET_PORT}:8000 --name ${CONTAINER_NAME} -e DB_USER=${DB_USER}\
+                    -e DB_PASSWORD=${DB_PASSWORD} -e DB_HOST=${DB_HOST} -e DB_PORT=${DB_PORT}\
+                    --restart=${RESTART_POLICY} -d run ${DOCKER_IMAGE}:${DOCKER_TAG}"
                 }
             }
         }
