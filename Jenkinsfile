@@ -48,12 +48,13 @@ pipeline {
                         }
                         withEnv(["DB_USER='${DB_USER}'", "DB_PASSWORD='${DB_PASSWORD}'", "DB_HOST='${DB_HOST}'", "DB_PORT='${DB_PORT}'"]) {
                             sh """
-                                docker run --rm ${DOCKER_IMAGE}:${DOCKER_TAG} \
+                                docker run --rm \
                                 -e DB_USER=${DB_USER} \
                                 -e DB_PASSWORD=${DB_PASSWORD} \
                                 -e DB_HOST=${DB_HOST} \
                                 -e DB_PORT=${DB_PORT} \
-                                python manage.py migrate --noinput
+                                 ${DOCKER_IMAGE}:${DOCKER_TAG} \
+                                 python manage.py migrate --noinput
                             """
                         }
                     }
