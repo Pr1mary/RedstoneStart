@@ -16,6 +16,18 @@ pipeline {
                 checkout scm
             }
         }
+        
+        stage('Force Git Update') {
+            steps {
+                script {
+                    sh """
+                        git fetch --all
+                        git reset --hard origin/master
+                        git pull origin master
+                    """
+                }
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
