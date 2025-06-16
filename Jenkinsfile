@@ -5,7 +5,7 @@ pipeline {
         DOCKER_IMAGE = 'redstonestart'
         DOCKER_TAG = 'latest'
         RESTART_POLICY = 'unless-stopped'
-        TARGET_PORT = '8000'
+        TARGET_PORT = '8080'
         CONTAINER_NAME = 'redstonestart'
         DB_PORT = '3306'
     }
