@@ -37,34 +37,38 @@ pipeline {
         
         stage('DB Migration') {
             steps {
-                withCredentials([
-                    string(credentialsId: 'DB_REDSTONE_USER_MIGRATOR', variable: 'DB_USER'),
-                    string(credentialsId: 'DB_REDSTONE_PASS_MIGRATOR', variable: 'DB_PASSWORD'),
-                    string(credentialsId: 'DB_REDSTONE_HOST', variable: 'DB_HOST')
-                ]){
-                    if (!DB_USER || !DB_PASSWORD || !DB_HOST) {
-                        error "Missing credentials for database migration!"
+                script {
+                    withCredentials([
+                        string(credentialsId: 'DB_REDSTONE_USER_MIGRATOR', variable: 'DB_USER'),
+                        string(credentialsId: 'DB_REDSTONE_PASS_MIGRATOR', variable: 'DB_PASSWORD'),
+                        string(credentialsId: 'DB_REDSTONE_HOST', variable: 'DB_HOST')
+                    ]){
+                        if (!DB_USER || !DB_PASSWORD || !DB_HOST) {
+                            error "Missing credentials for database migration!"
+                        }
+                        sh "docker run --rm ${DOCKER_IMAGE}:${DOCKER_TAG} -e DB_USER=${DB_USER}\
+                        -e DB_PASSWORD=${DB_PASSWORD} -e DB_HOST=${DB_HOST} -e DB_PORT=${DB_PORT}\
+                        python manage.py migrate --noinput"
                     }
-                    sh "docker run --rm ${DOCKER_IMAGE}:${DOCKER_TAG} -e DB_USER=${DB_USER}\
-                    -e DB_PASSWORD=${DB_PASSWORD} -e DB_HOST=${DB_HOST} -e DB_PORT=${DB_PORT}\
-                    python manage.py migrate --noinput"
                 }
             }
         }
 
         stage('Deploy') {
             steps {
-                withCredentials([
-                    string(credentialsId: 'DB_REDSTONE_USER', variable: 'DB_USER'),
-                    string(credentialsId: 'DB_REDSTONE_PASS', variable: 'DB_PASSWORD'),
-                    string(credentialsId: 'DB_REDSTONE_HOST', variable: 'DB_HOST')
-                ]){
-                    if (!DB_USER || !DB_PASSWORD || !DB_HOST) {
-                        error "Missing credentials for running the application!"
+                script {
+                    withCredentials([
+                        string(credentialsId: 'DB_REDSTONE_USER', variable: 'DB_USER'),
+                        string(credentialsId: 'DB_REDSTONE_PASS', variable: 'DB_PASSWORD'),
+                        string(credentialsId: 'DB_REDSTONE_HOST', variable: 'DB_HOST')
+                    ]){
+                        if (!DB_USER || !DB_PASSWORD || !DB_HOST) {
+                            error "Missing credentials for running the application!"
+                        }
+                        sh "docker -p ${TARGET_PORT}:8000 --name ${CONTAINER_NAME} -e DB_USER=${DB_USER}\
+                        -e DB_PASSWORD=${DB_PASSWORD} -e DB_HOST=${DB_HOST} -e DB_PORT=${DB_PORT}\
+                        --restart=${RESTART_POLICY} -d run ${DOCKER_IMAGE}:${DOCKER_TAG}"
                     }
-                    sh "docker -p ${TARGET_PORT}:8000 --name ${CONTAINER_NAME} -e DB_USER=${DB_USER}\
-                    -e DB_PASSWORD=${DB_PASSWORD} -e DB_HOST=${DB_HOST} -e DB_PORT=${DB_PORT}\
-                    --restart=${RESTART_POLICY} -d run ${DOCKER_IMAGE}:${DOCKER_TAG}"
                 }
             }
         }
