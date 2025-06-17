@@ -35,13 +35,13 @@ CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 FROM base AS dev
 ENV MODE=dev
 ENV DB_NAME=redstonestart
-ENV APP_URL=mcmanager.mraflis.com
+ENV APP_URL=redstonestart.mraflis.com
 
 
 # for production build
 FROM base AS prod
 ENV MODE=prod
 ENV DB_NAME=redstonestart
-ENV ALLOWED_HOST_LIST=mraflis.com,mcmanager.mraflis.com,192.168.1.65
-ENV APP_URL=mcmanager.mraflis.com
+ENV ALLOWED_HOST_LIST=mraflis.com,redstonestart.mraflis.com,192.168.1.65
+ENV APP_URL=redstonestart.mraflis.com
 
