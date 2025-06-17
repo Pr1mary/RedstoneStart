@@ -89,9 +89,9 @@ pipeline {
                         withEnv(["DB_USER='${DB_USER}'", "DB_PASSWORD='${DB_PASSWORD}'", "DB_HOST='${DB_HOST}'", "DB_PORT='${DB_PORT}'"]) {
                             sh """
                                 docker run -p ${TARGET_PORT}:8000 \
-                                --name "${CONTAINER_NAME}" -e DB_USER="${DB_USER}" \
-                                -e DB_PASSWORD="${DB_PASSWORD}" -e DB_HOST="${DB_HOST}" \
-                                -e DB_PORT="${DB_PORT}" --restart=${RESTART_POLICY} -d \
+                                --name "${CONTAINER_NAME}" -e DB_USER=${DB_USER} \
+                                -e DB_PASSWORD=${DB_PASSWORD} -e DB_HOST=${DB_HOST} \
+                                -e DB_PORT=${DB_PORT} --restart=${RESTART_POLICY} -d \
                                 ${DOCKER_IMAGE}:${DOCKER_TAG}
                             """
                         }
