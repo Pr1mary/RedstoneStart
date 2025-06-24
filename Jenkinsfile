@@ -23,7 +23,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh "docker build --target=prod -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                    sh "docker build --target=${APP_MODE} -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
                 }
             }
         }
