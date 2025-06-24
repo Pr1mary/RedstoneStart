@@ -32,7 +32,7 @@ pipeline {
             steps {
                 script {
                     sh """
-                        docker run --rm ${DOCKER_IMAGE}:${DOCKER_TAG} python manage.py test
+                        docker run --rm -e CSRF_TRUSTED_ORIGINS_LIST=${CSRF_TRUSTED_ORIGINS_LIST} ${DOCKER_IMAGE}:${DOCKER_TAG} python manage.py test
                     """
                 }
             }
