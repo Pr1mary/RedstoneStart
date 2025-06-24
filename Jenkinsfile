@@ -83,7 +83,7 @@ pipeline {
                         string(credentialsId: 'DB_REDSTONE_PASS', variable: 'DB_PASSWORD'),
                         string(credentialsId: 'DJANGO_SECRET', variable: 'DJANGO_SECRET')
                     ]){
-                        if (!DB_USER || !DB_PASSWORD || !DB_HOST || !DJANGO_SECRET) {
+                        if (!DB_USER || !DB_PASSWORD || !CSRF_TRUSTED_ORIGINS_LIST || !DJANGO_SECRET) {
                             error "Missing credentials for running the application!"
                         }
                         
