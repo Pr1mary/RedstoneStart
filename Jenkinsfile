@@ -88,7 +88,7 @@ pipeline {
                             error "Missing credentials for running the application!"
                         }
                         
-                        withEnv(["DB_USER='${DB_USER}'", "DB_PASSWORD='${DB_PASSWORD}'", "DB_HOST='${DB_HOST}'", "DB_PORT='${DB_PORT}'"]) {
+                        withEnv(["DB_USER='${DB_USER}'", "DB_PASSWORD='${DB_PASSWORD}'", "DJANGO_SECRET='${DJANGO_SECRET}'", "DB_HOST='${DB_HOST}'", "DB_PORT='${DB_PORT}'"]) {
                             sh """
                                 docker run -p ${TARGET_PORT}:8000 \
                                 --name "${CONTAINER_NAME}" -e DB_USER=${DB_USER} -e APP_URL=${APP_URL} \
