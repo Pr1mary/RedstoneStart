@@ -55,8 +55,9 @@ pipeline {
                                 -e DB_PASSWORD=${DB_PASSWORD} \
                                 -e DB_HOST=${DB_HOST} \
                                 -e DB_PORT=${DB_PORT} \
-                                 ${DOCKER_IMAGE}:${DOCKER_TAG} \
-                                 python manage.py migrate --noinput
+                                -e CSRF_TRUSTED_ORIGINS_LIST=${CSRF_TRUSTED_ORIGINS_LIST} \
+                                ${DOCKER_IMAGE}:${DOCKER_TAG} \
+                                python manage.py migrate --noinput
                             """
                         }
                     }
