@@ -1,15 +1,6 @@
 pipeline {
     agent { label 'linux-docker' }
 
-    environment {
-        DOCKER_IMAGE = 'redstonestart'
-        DOCKER_TAG = 'latest'
-        RESTART_POLICY = 'unless-stopped'
-        TARGET_PORT = '8080'
-        CONTAINER_NAME = 'redstonestart'
-        DB_PORT = '3306'
-    }
-
     stages {
         stage('Checkout') {
             steps {
@@ -52,8 +43,7 @@ pipeline {
                 script {
                     withCredentials([
                         string(credentialsId: 'DB_REDSTONE_USER_MIGRATOR', variable: 'DB_USER'),
-                        string(credentialsId: 'DB_REDSTONE_PASS_MIGRATOR', variable: 'DB_PASSWORD'),
-                        string(credentialsId: 'DB_REDSTONE_HOST', variable: 'DB_HOST')
+                        string(credentialsId: 'DB_REDSTONE_PASS_MIGRATOR', variable: 'DB_PASSWORD')
                     ]){
                         if (!DB_USER || !DB_PASSWORD || !DB_HOST) {
                             error "Missing credentials for database migration!"
@@ -74,15 +64,26 @@ pipeline {
             }
         }
 
+        stage("Stop Old Container"){
+            step {
+                script {
+                    // stop container then put it on grep so that it won't return error if container not found
+                    sh "docker stop ${CONTAINER_NAME} | grep '${CONTAINER_NAME}'"
+                    // delete container then put it on grep so that it won't return error if container not found
+                    sh "docker rm ${CONTAINER_NAME} | grep '${CONTAINER_NAME}'"
+                }
+            }
+        }
+
         stage('Deploy') {
             steps {
                 script {
                     withCredentials([
                         string(credentialsId: 'DB_REDSTONE_USER', variable: 'DB_USER'),
                         string(credentialsId: 'DB_REDSTONE_PASS', variable: 'DB_PASSWORD'),
-                        string(credentialsId: 'DB_REDSTONE_HOST', variable: 'DB_HOST')
+                        string(credentialsId: 'DJANGO_SECRET', variable: 'DJANGO_SECRET')
                     ]){
-                        if (!DB_USER || !DB_PASSWORD || !DB_HOST) {
+                        if (!DB_USER || !DB_PASSWORD || !DB_HOST || !DJANGO_SECRET) {
                             error "Missing credentials for running the application!"
                         }
                         
