@@ -36,6 +36,10 @@ if os.getenv("ALLOWED_HOST_LIST", ""):
 else:
     ALLOWED_HOSTS = ["*"]
 
+if os.getenv("CSRF_TRUSTED_ORIGINS_LIST", ""):
+    CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS_LIST", "").split(",")
+else:
+    CSRF_TRUSTED_ORIGINS = ["*"]
 
 # Application definition
 
