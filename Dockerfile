@@ -28,20 +28,21 @@ COPY . .
 # Expose port
 EXPOSE 8000
 
-# Collect static file during image build
-RUN python manage.py collectstatic --noinput
-
-# Run the application
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
-
 # for development build
 FROM base AS dev
 ENV MODE=dev
 ENV DB_NAME=redstonestart
 
+# Run the application
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
 # for production build
 FROM base AS prod
 ENV MODE=prod
 ENV DB_NAME=redstonestart
 
+# Collect static file during image build
+RUN python manage.py collectstatic --noinput
+
+# Run the application
+CMD ["gunicorn", "mcplayer_manager.asgi:application", "--bind", "0.0.0.0:8000", "--workers", "4"]

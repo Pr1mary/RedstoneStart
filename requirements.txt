@@ -1,8 +1,11 @@
 asgiref==3.8.1
 Django==5.1.7
 dotenv==0.9.9
+gunicorn==23.0.0
 mcrcon==0.7.0
 mysqlclient==2.2.7
+packaging==25.0
 python-dotenv==1.0.1
 sqlparse==0.5.3
 typing_extensions==4.12.2
+whitenoise==6.9.0
