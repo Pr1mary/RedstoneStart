@@ -45,4 +45,4 @@ ENV DB_NAME=redstonestart
 RUN python manage.py collectstatic --noinput
 
 # Run the application
-CMD ["gunicorn", "mcplayer_manager.asgi:application", "--bind", "0.0.0.0:8000", "--workers", "4"]
+CMD ["gunicorn", "mcplayer_manager.asgi:application", "--bind", "0.0.0.0:8000", "--workers", "5", "--worker-class", "uvicorn.workers.UvicornWorker"]
