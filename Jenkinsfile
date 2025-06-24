@@ -65,7 +65,7 @@ pipeline {
         }
 
         stage("Stop Old Container"){
-            step {
+            steps {
                 script {
                     // stop container then put it on grep so that it won't return error if container not found
                     sh "docker stop ${CONTAINER_NAME} | grep '${CONTAINER_NAME}'"
