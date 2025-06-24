@@ -108,8 +108,12 @@ class PlayerManagerView(LoginRequiredMixin, View):
         )
 
         if player_server_map_created:
-            player_mapping_process = Process(target=self.__add_whitelist_player, args=[player_server_map.pk])
-            player_mapping_process.start()
+            # player_mapping_process = Process(target=self.__add_whitelist_player, args=[player_server_map.pk])
+            # player_mapping_process.start()
+
+            player_handler = PlayerHandler()
+            player_handler.add_whitelist_player(player_server_map.pk)
+
 
         return redirect("player_list")
     
@@ -197,7 +201,7 @@ class PlayerJoinManagerView(View):
                 },
             )
 
-            player_map, _ = PlayerServerMap.objects.get_or_create(
+            player_server_map, _ = PlayerServerMap.objects.get_or_create(
                 player_invited = player,
                 server_joined = find_server,
                 defaults={
@@ -207,7 +211,7 @@ class PlayerJoinManagerView(View):
             )
 
             player_handler = PlayerHandler()
-            player_handler.__add_whitelist_player()
+            player_handler.add_whitelist_player(player_server_map.pk)
 
         except Exception as err:
             print(f"Error when storing server: {err.args}")
