@@ -19,8 +19,8 @@ class ServerManagerView(LoginRequiredMixin, View):
     login_url = "/accounts/auth/login"
 
     def get(self, request: HttpRequest, *args, **kwargs):
-
-        server_list = ServerList.objects.filter(is_deleted=False).order_by("-created_at")
+        curr_user = request.user
+        server_list = ServerList.objects.filter(created_by=curr_user, is_deleted=False).order_by("-created_at")
         server_detail_list = []
         for server in server_list:
             server_detail = {

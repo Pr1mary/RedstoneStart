@@ -24,6 +24,7 @@ class PlayerManagerView(LoginRequiredMixin, View):
         server_id = request.GET.get("server_id", None)
         username_target = request.GET.get("username", None)
         user_status = request.GET.get("status", None)
+        curr_user = request.user
         try:
             server_id = int(server_id)
         except:
@@ -31,7 +32,7 @@ class PlayerManagerView(LoginRequiredMixin, View):
 
         curr_server_id = None
         server_list_parsed = []
-        server_list = ServerList.objects.all().order_by("created_at")
+        server_list = ServerList.objects.filter(created_by=curr_user).order_by("created_at")
         if not server_id and server_list:
             server_id = server_list.first().pk
             curr_server_id = server_id
