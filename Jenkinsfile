@@ -1,3 +1,8 @@
+def stop_success
+def rename_success
+def remove_success
+def rollback_container
+
 pipeline {
     agent { label 'linux-docker' }
 
@@ -68,10 +73,27 @@ pipeline {
         stage("Stop Old Container"){
             steps {
                 script {
-                    // stop container then put it on grep so that it won't return error if container not found
-                    sh "docker stop ${CONTAINER_NAME} | grep '${CONTAINER_NAME}'"
-                    // delete container then put it on grep so that it won't return error if container not found
-                    sh "docker rm ${CONTAINER_NAME} | grep '${CONTAINER_NAME}'"
+                    // stop container process
+                    stop_success = sh (
+                        script: "docker stop ${CONTAINER_NAME}",
+                        returnStatus: true 
+                    )
+
+                    echo "Stop status (${stop_success})"
+                }
+            }
+        }
+
+        stage("Backup Old Container"){
+            steps {
+                script {
+                    // rename container process
+                    rename_success = sh (
+                        script: "docker rename ${CONTAINER_NAME} ${CONTAINER_NAME}-OLD",
+                        returnStatus: true 
+                    )
+
+                    echo "Backup status (${rename_success})"
                 }
             }
         }
@@ -98,7 +120,59 @@ pipeline {
                                 --restart=${RESTART_POLICY} -d ${DOCKER_IMAGE}:${DOCKER_TAG}
                             """
                         }
+
+                        rollback_container = false
+                        echo "Container named ${CONTAINER_NAME} is running!"
                     }
+                }
+            }
+            post {
+                failure {
+                    rollback_container = true
+                }
+                
+            }
+        }
+
+        stage("Rollback Old Container"){
+            when {
+                expression {
+                    rename_success == 0 && rollback_container
+                }
+            }
+            steps {
+                script {
+                    // delete container then put it on grep so that it won't return error if container not found
+                    rename_status = sh (
+                        script: "docker rename ${CONTAINER_NAME}-OLD ${CONTAINER_NAME}",
+                        returnStatus: true 
+                    )
+
+                    start_status = sh (
+                        script: "docker start ${CONTAINER_NAME}",
+                        returnStatus: true 
+                    )
+
+                    echo "Rollback status (${rename_status} - ${start_status})"
+                }
+            }
+        }
+
+        stage("Remove Old Container"){
+            when {
+                expression {
+                    rename_success == 0 && !rollback_container
+                }
+            }
+            steps {
+                script {
+                    // delete container then put it on grep so that it won't return error if container not found
+                    remove_success = sh (
+                        script: "docker rm ${CONTAINER_NAME}-OLD",
+                        returnStatus: true 
+                    )
+
+                    echo "Remove return status (${remove_success})"
                 }
             }
         }
@@ -106,7 +180,7 @@ pipeline {
 
     post {
         failure {
-            echo 'Pipeline failed! Check the logs for details.'
+            echo 'Pipeline failed! Affected container will be rolled back, check the logs for details.'
         }
         success {
             echo 'Pipeline completed successfully!'
