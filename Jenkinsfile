@@ -128,7 +128,9 @@ pipeline {
             }
             post {
                 failure {
-                    rollback_container = true
+                    script {
+                        rollback_container = true
+                    }
                 }
                 
             }
