@@ -153,6 +153,10 @@
                 </div>
             </div>
             <div class="modal-footer">
+                <button id="shell-server-btn" type="button" class="btn btn-secondary me-auto" data-bs-toggle="modal" data-bs-target="#shellservermodal" disabled>
+                    <span class="mdi mdi-console"></span>
+                    Shell
+                </button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-danger" id="delete-server-btn" onclick="deleteServer()">Delete Server</button>
             </div>
@@ -180,6 +184,38 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-danger" id="close-invite-btn" onclick="closeInvite()">Close Invitation</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="shellservermodal" class="modal fade" tabindex="-1" aria-labelledby="shellservermodallabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="shellservermodallabel">Server Shell</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="card mb-3" style="height: 400px; overflow-y: auto;">
+                    <p style="bottom: 0; position: relative">
+                        test 2<br/>
+                        test 3<br/>
+                        test 6<br/>
+                        test 2<br/>
+                        test 3<br/>
+                        test 4<br/>
+                        test 5<br/>
+                        test 6<br/>
+                    </p>
+                </div>
+                <div class="input-group mb-3">
+                    <label for="shell-cmd" class="input-group-text">/</label>
+                    <input type="text" class="form-control" id="shell-cmd" name="shell-cmd">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -385,11 +421,15 @@
 
             const is_online_badge = $("#server-status-online");
             const is_offline_badge = $("#server-status-offline");
+            const shell_btn = $("#shell-server-btn");
             const is_online = resp_data["active"];
+            console.log(is_online);
             if(is_online){
+                shell_btn.prop("disabled", false);
                 is_online_badge.show();
                 is_offline_badge.hide();
             }else{
+                shell_btn.prop("disabled", true);
                 is_online_badge.hide();
                 is_offline_badge.show();
             }

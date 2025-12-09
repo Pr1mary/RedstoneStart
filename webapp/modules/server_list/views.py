@@ -355,3 +355,37 @@ class ServerManagerStatusView(View):
         
         finally:
             connection.close()
+
+class ServerManagerRconShellView(View):
+
+    def post(self, request: HttpRequest, *args, **kwargs):
+
+        req_post = json.loads(request.body)
+        server_id = req_post.get("server_id")
+        command = req_post.get("command")
+        resp_data = {}
+
+        try:
+            if not server_id:
+                raise Exception("Server id is empty")
+            
+            server_details = ServerList.objects.filter(pk=server_id).first()
+            if not server_details:
+                raise Exception("Server not found")
+
+            server_address = server_details.server_url
+            server_secret = server_details.server_secret
+            server_is_vanilla = server_details.server_is_vanilla
+
+            mcrcon = MCRconUtil(server_address, server_secret, is_vanilla=server_is_vanilla)
+            resp_cmd = mcrcon.rawCmd(command)
+
+            resp_data["command_resp"] = resp_cmd
+
+            return JsonResponse(resp_data)
+
+        except Exception as err:
+
+            resp_data["command_resp"] = None
+            return JsonResponse(resp_data)
+        

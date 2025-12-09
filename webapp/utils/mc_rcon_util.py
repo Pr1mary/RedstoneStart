@@ -157,3 +157,12 @@ class MCRconUtil:
             return False
         
         return True
+    
+    def rawCmd(self, command: str):
+        
+        if not isinstance(command, str):
+            raise Exception("Command must be a string and must not be empty")
+
+        resp_cmd = self.__command(command)
+        
+        return resp_cmd
