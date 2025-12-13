@@ -197,22 +197,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="card mb-3" style="height: 400px; overflow-y: auto;">
-                    <p style="bottom: 0; position: relative">
-                        test 2<br/>
-                        test 3<br/>
-                        test 6<br/>
-                        test 2<br/>
-                        test 3<br/>
-                        test 4<br/>
-                        test 5<br/>
-                        test 6<br/>
-                    </p>
-                </div>
-                <div class="input-group mb-3">
-                    <label for="shell-cmd" class="input-group-text">/</label>
-                    <input type="text" class="form-control" id="shell-cmd" name="shell-cmd">
-                </div>
+                <div id="terminal"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -222,6 +207,8 @@
 </div>
 
 <script>
+    let terminal = null;
+
     $("document").ready(() => {
         const detail_modal = $("#detailservermodal");
         detail_modal.on("show.bs.modal", detailServer);
@@ -233,7 +220,18 @@
         refresh_spinner.hide();
         const refresh_logo = $("#refresh-logo");
         refresh_logo.show();
+
+        terminal = new Terminal();
+        terminal.open($("#terminal")[0]);
+        terminal.write("> Hello, world!");
     });
+
+    function termReady() {
+        if (terminal === null) {
+            return false;
+        }
+        return true;
+    }
 
     function refreshStatus(btn_id){
         const addServerBtn = $("#add-server-btn")
@@ -423,7 +421,7 @@
             const is_offline_badge = $("#server-status-offline");
             const shell_btn = $("#shell-server-btn");
             const is_online = resp_data["active"];
-            console.log(is_online);
+            
             if(is_online){
                 shell_btn.prop("disabled", false);
                 is_online_badge.show();

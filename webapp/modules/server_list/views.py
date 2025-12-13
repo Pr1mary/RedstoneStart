@@ -8,6 +8,7 @@ from django.urls import reverse_lazy
 from webapp.utils.mc_rcon_util import MCRconUtil
 from multiprocessing import Process, Pool
 from django.db import connection
+from channels.generic.websocket import WebsocketConsumer
 
 import random, string, json
 
@@ -356,7 +357,19 @@ class ServerManagerStatusView(View):
         finally:
             connection.close()
 
-class ServerManagerRconShellView(View):
+class ServerManagerRconShellView(WebsocketConsumer):
+
+    def connect(self):
+        self.accept()
+
+    def disconnect(self, code):
+        self.close()
+
+    def receive(self, text_data = None, bytes_data = None):
+
+        raw_data:dict = json.loads(text_data)
+        
+        return super().receive(text_data, bytes_data)
 
     def post(self, request: HttpRequest, *args, **kwargs):
 
