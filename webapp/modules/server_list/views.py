@@ -362,22 +362,19 @@ class ServerManagerRconShellView(WebsocketConsumer):
     def connect(self):
         self.accept()
 
-    def disconnect(self, code):
-        self.close()
-
     def receive(self, text_data = None, bytes_data = None):
 
-        raw_data:dict = json.loads(text_data)
-        print(raw_data)
+        data:dict = json.loads(text_data)
+        response = self.rawProcess(data.get("server_id"), data.get("command"))
+
+        self.send(json.dumps({
+            "err": response == None,
+            "resp": response
+        }))
         
         return super().receive(text_data, bytes_data)
 
-    def rawProcess(self, request: HttpRequest, *args, **kwargs):
-
-        req_post = json.loads(request.body)
-        server_id = req_post.get("server_id")
-        command = req_post.get("command")
-        resp_data = {}
+    def __rawProcess(self, server_id: string, command: string):
 
         try:
             if not server_id:
@@ -393,13 +390,11 @@ class ServerManagerRconShellView(WebsocketConsumer):
 
             mcrcon = MCRconUtil(server_address, server_secret, is_vanilla=server_is_vanilla)
             resp_cmd = mcrcon.rawCmd(command)
-
-            resp_data["command_resp"] = resp_cmd
-
-            return JsonResponse(resp_data)
+            
+            return resp_cmd
 
         except Exception as err:
 
-            resp_data["command_resp"] = None
-            return JsonResponse(resp_data)
+            print(err)
+            return None
         

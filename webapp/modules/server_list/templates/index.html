@@ -154,7 +154,7 @@
             </div>
             <div class="modal-footer">
                 <button id="shell-server-btn" type="button" class="btn btn-secondary me-auto" data-bs-toggle="modal"
-                data-bs-target="#shellservermodal" onclick="terminalProcess()" disabled>
+                data-bs-target="#shellservermodal" disabled>
                     <span class="mdi mdi-console"></span>
                     Shell
                 </button>
@@ -209,6 +209,8 @@
 
 <script>
     let terminal = null;
+    let socket = null;
+    let count = 0;
 
     $("document").ready(() => {
         const detail_modal = $("#detailservermodal");
@@ -217,31 +219,98 @@
         const invite_modal = $("#serverinvitemodal");
         invite_modal.on("show.bs.modal", inviteDetail);
 
+        const shell_modal = $("#shellservermodal");
+        shell_modal.on("show.bs.modal", terminalProcess);
+        shell_modal.on("hide.bs.modal", terminalClose);
+
         const refresh_spinner = $("#refresh-spinner");
         refresh_spinner.hide();
         const refresh_logo = $("#refresh-logo");
         refresh_logo.show();
 
-        terminal = new Terminal();
+        console.log(terminal);
     });
 
     function terminalProcess() {
-        if (terminal === null) {
-            return;
+        // setup terminal process
+        if (!terminal) {
+            terminal = new Terminal();
+            terminal.open($("#terminal")[0]);
         }
 
-        try {
-            const socket = new WebSocket(`ws://${window.location.host}/servermanager/rconshell/123/`);
-                
-            socket.addEventListener("open", event => {
-                terminal.open($("#terminal")[0]);
-                terminal.write(`> ${event.data}`);
-            });
-        } catch (error) {
-            console.log("Test console");
-            terminal.open($("#terminal")[0]);
-            terminal.write(`> Connection failed`);
-        }
+        // setup websocket flow
+        socket = new WebSocket(`ws://${window.location.host}/servermanager/rconshell/123/`);
+
+        // terminal input event
+        let command = "";
+        let wait = false;
+        terminal.onData(chunk => {
+            const disableChar = ["\x1b[C","\x1b[A","\x1b[D","\x1b[B"];
+            const actionChar = ["\x7f"];
+            try {
+                if (wait ||
+                disableChar.indexOf(chunk) > -1 ||
+                (actionChar.indexOf(chunk) > -1 && command === "")) {
+                    return;
+                } else if (chunk === "\x7f") {
+                    terminal.write("\b \b");
+                    command = command.slice(0,-1);
+                } else if (chunk === "\r" && command === "") {
+                    terminal.writeln("");
+                    terminal.writeln("");
+                    terminal.write("/> ");
+                } else if (chunk === "\r") {
+                    const cmdData = {
+                        "server_id": 1,
+                        "command": command
+                    };
+                    socket.send(JSON.stringify(cmdData));
+                    command = "";
+                    wait = true;
+                } else {
+                    terminal.write(chunk);
+                    command += chunk;
+                }       
+            } catch (error) {
+                console.error(error)
+            }
+        });
+
+        // socket open event
+        socket.addEventListener("open", event => {
+            terminal.writeln("//=====================\\\\");
+            terminal.writeln("||  Server connected!  ||");
+            terminal.writeln("\\\\=====================//");
+            terminal.writeln("");
+            terminal.write("/> ");
+        });
+
+        // socket message event
+        socket.addEventListener("message", event => {
+            terminal.writeln("");
+
+            try {
+                const data = JSON.parse(event.data);
+                if (data.err) throw "Command Error";
+                terminal.writeln(`${data.resp}`);
+            } catch (error) {
+                console.error(error);
+                terminal.writeln(`Error: ${error}`);
+            }
+            
+            terminal.writeln("");
+            terminal.write("/> ");
+            wait = false;
+        });
+
+    }
+
+    function terminalClose() {
+        console.log("terminal", terminal);
+        if (terminal) terminal.clear();
+        if (socket) socket.close();
+
+        console.log("terminal close");
     }
 
     function refreshStatus(btn_id){
