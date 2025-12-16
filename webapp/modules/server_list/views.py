@@ -368,10 +368,11 @@ class ServerManagerRconShellView(WebsocketConsumer):
     def receive(self, text_data = None, bytes_data = None):
 
         raw_data:dict = json.loads(text_data)
+        print(raw_data)
         
         return super().receive(text_data, bytes_data)
 
-    def post(self, request: HttpRequest, *args, **kwargs):
+    def rawProcess(self, request: HttpRequest, *args, **kwargs):
 
         req_post = json.loads(request.body)
         server_id = req_post.get("server_id")

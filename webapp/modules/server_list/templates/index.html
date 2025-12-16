@@ -153,7 +153,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="shell-server-btn" type="button" class="btn btn-secondary me-auto" data-bs-toggle="modal" data-bs-target="#shellservermodal" disabled>
+                <button id="shell-server-btn" type="button" class="btn btn-secondary me-auto" data-bs-toggle="modal"
+                data-bs-target="#shellservermodal" onclick="terminalProcess()" disabled>
                     <span class="mdi mdi-console"></span>
                     Shell
                 </button>
@@ -222,15 +223,25 @@
         refresh_logo.show();
 
         terminal = new Terminal();
-        terminal.open($("#terminal")[0]);
-        terminal.write("> Hello, world!");
     });
 
-    function termReady() {
+    function terminalProcess() {
         if (terminal === null) {
-            return false;
+            return;
         }
-        return true;
+
+        try {
+            const socket = new WebSocket(`ws://${window.location.host}/servermanager/rconshell/123/`);
+                
+            socket.addEventListener("open", event => {
+                terminal.open($("#terminal")[0]);
+                terminal.write(`> ${event.data}`);
+            });
+        } catch (error) {
+            console.log("Test console");
+            terminal.open($("#terminal")[0]);
+            terminal.write(`> Connection failed`);
+        }
     }
 
     function refreshStatus(btn_id){

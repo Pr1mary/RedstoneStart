@@ -44,7 +44,7 @@ else:
 # Application definition
 
 INSTALLED_APPS = [
-    'channels'
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -91,8 +91,8 @@ STATICFILES_DIRS = [
     BASE_DIR.joinpath("webapp").joinpath("static")
 ]
 
+ASGI_APPLICATION = 'mcplayer_manager.asgi.application'
 WSGI_APPLICATION = 'mcplayer_manager.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
