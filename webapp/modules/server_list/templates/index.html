@@ -211,6 +211,7 @@
     let terminal = null;
     let socket = null;
     let count = 0;
+    let currServerId = null;
 
     $("document").ready(() => {
         const detail_modal = $("#detailservermodal");
@@ -231,7 +232,10 @@
         console.log(terminal);
     });
 
-    function terminalProcess() {
+    function terminalProcess(event) {
+
+        const server_id = event.relatedTarget.getAttribute('data-bs-server-id');
+
         // setup terminal process
         if (!terminal) {
             terminal = new Terminal();
@@ -239,7 +243,7 @@
         }
 
         // setup websocket flow
-        socket = new WebSocket(`ws://${window.location.host}/servermanager/rconshell/123/`);
+        socket = new WebSocket(`ws://${window.location.host}/servermanager/rconshell/`);
 
         // terminal input event
         let command = "";
@@ -261,7 +265,7 @@
                     terminal.write("/> ");
                 } else if (chunk === "\r") {
                     const cmdData = {
-                        "server_id": 1,
+                        "server_id": server_id,
                         "command": command
                     };
                     socket.send(JSON.stringify(cmdData));
@@ -306,11 +310,8 @@
     }
 
     function terminalClose() {
-        console.log("terminal", terminal);
         if (terminal) terminal.clear();
         if (socket) socket.close();
-
-        console.log("terminal close");
     }
 
     function refreshStatus(btn_id){
@@ -479,6 +480,10 @@
             }
 
             const resp_data = await resp.json();
+
+            // inject server id
+            const shell_button = $("#shell-server-btn");
+            shell_button.attr("data-bs-server-id", resp_data["id"]);
 
             // section for edit server details
             const edit_server_name_form = $("#edit-server-name");

@@ -6,7 +6,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.conf import settings
 from django.urls import reverse_lazy
 from webapp.utils.mc_rcon_util import MCRconUtil
-from multiprocessing import Process, Pool
+from multiprocessing import Process, Pool, Manager
 from django.db import connection
 from channels.generic.websocket import WebsocketConsumer
 
@@ -365,18 +365,24 @@ class ServerManagerRconShellView(WebsocketConsumer):
     def receive(self, text_data = None, bytes_data = None):
 
         data:dict = json.loads(text_data)
-        response = self.rawProcess(data.get("server_id"), data.get("command"))
+        shared_dict = Manager().dict()
+
+        server_update_process = Process(target=self.__rawProcess, args=[data.get("server_id"), data.get("command"), shared_dict])
+        server_update_process.start()
+        server_update_process.join()
 
         self.send(json.dumps({
-            "err": response == None,
-            "resp": response
+            "err": shared_dict.get("err") != None,
+            "resp": shared_dict.get("resp")
         }))
         
         return super().receive(text_data, bytes_data)
 
-    def __rawProcess(self, server_id: string, command: string):
+    def __rawProcess(self, server_id: string, command: string, return_dict: dict):
 
         try:
+            connection.close()
+
             if not server_id:
                 raise Exception("Server id is empty")
             
@@ -389,12 +395,13 @@ class ServerManagerRconShellView(WebsocketConsumer):
             server_is_vanilla = server_details.server_is_vanilla
 
             mcrcon = MCRconUtil(server_address, server_secret, is_vanilla=server_is_vanilla)
-            resp_cmd = mcrcon.rawCmd(command)
-            
-            return resp_cmd
+            return_dict["err"] = None
+            return_dict["resp"] = mcrcon.rawCmd(command)
 
         except Exception as err:
 
-            print(err)
-            return None
+            return_dict["err"] = err
+            return_dict["resp"] = None
         
+        finally:
+            connection.close()

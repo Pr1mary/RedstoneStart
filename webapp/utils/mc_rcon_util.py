@@ -26,7 +26,7 @@ class MCRconUtil:
                 print("resp: [{}] >> {}".format(command, resp_cmd))
         except Exception as err:
             print("Error mc rcon: {}".format(err))
-            resp_cmd = "[ERROR]"
+            resp_cmd = "[ERROR] {}".format(err)
         
         endtime = datetime.now().timestamp()
         deltatime = endtime-starttime
