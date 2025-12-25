@@ -296,7 +296,14 @@
             try {
                 const data = JSON.parse(event.data);
                 if (data.err) throw "Command Error";
-                terminal.writeln(`${data.resp}`);
+                if (!Array.isArray(data.resp)) throw "";
+                for (const rawResp of data.resp) {
+                    console.log(rawResp);
+                    const resp = rawResp?.replace(/§[0-9A-FK-OR]/gi, "") ?? "";
+                    console.log(resp);
+                    terminal.writeln("");
+                    terminal.write(`${resp}`);
+                }
             } catch (error) {
                 console.error(error);
                 terminal.writeln(`Error: ${error}`);

@@ -370,10 +370,11 @@ class ServerManagerRconShellView(WebsocketConsumer):
         server_update_process = Process(target=self.__rawProcess, args=[data.get("server_id"), data.get("command"), shared_dict])
         server_update_process.start()
         server_update_process.join()
+        respMsg = shared_dict.get("resp").split("\n") if shared_dict.get("resp") is not None else []
 
         self.send(json.dumps({
             "err": shared_dict.get("err") != None,
-            "resp": shared_dict.get("resp")
+            "resp": respMsg
         }))
         
         return super().receive(text_data, bytes_data)
