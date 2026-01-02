@@ -237,10 +237,8 @@
         const server_id = event.relatedTarget.getAttribute('data-bs-server-id');
 
         // setup terminal process
-        if (!terminal) {
-            terminal = new Terminal();
-            terminal.open($("#terminal")[0]);
-        }
+        terminal = new Terminal();
+        terminal.open($("#terminal")[0]);
 
         // setup websocket flow
         socket = new WebSocket(`ws://${window.location.host}/servermanager/rconshell/`);
@@ -271,6 +269,7 @@
                     socket.send(JSON.stringify(cmdData));
                     command = "";
                     wait = true;
+                    terminal.writeln("");
                 } else {
                     terminal.write(chunk);
                     command += chunk;
@@ -291,7 +290,6 @@
 
         // socket message event
         socket.addEventListener("message", event => {
-            terminal.writeln("");
 
             try {
                 const data = JSON.parse(event.data);
@@ -301,8 +299,7 @@
                     console.log(rawResp);
                     const resp = rawResp?.replace(/§[0-9A-FK-OR]/gi, "") ?? "";
                     console.log(resp);
-                    terminal.writeln("");
-                    terminal.write(`${resp}`);
+                    terminal.writeln(`${resp}`);
                 }
             } catch (error) {
                 console.error(error);
@@ -317,7 +314,7 @@
     }
 
     function terminalClose() {
-        if (terminal) terminal.clear();
+        if (terminal) terminal.dispose();
         if (socket) socket.close();
     }
 
