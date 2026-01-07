@@ -237,8 +237,11 @@
         const server_id = event.relatedTarget.getAttribute('data-bs-server-id');
 
         // setup terminal process
-        terminal = new Terminal();
+        terminal = new Terminal({
+            cols: 50
+        });
         terminal.open($("#terminal")[0]);
+        console.log(terminal.rows, terminal.cols);
 
         // setup websocket flow
         socket = new WebSocket(`ws://${window.location.host}/servermanager/rconshell/`);
@@ -296,14 +299,11 @@
                 if (data.err) throw "Command Error";
                 if (!Array.isArray(data.resp)) throw "";
                 for (const rawResp of data.resp) {
-                    console.log(rawResp);
-                    const resp = rawResp?.replace(/§[0-9A-FK-OR]/gi, "") ?? "";
-                    console.log(resp);
-                    terminal.writeln(`${resp}`);
+                    writeWordWarp(terminal, rawResp);
                 }
             } catch (error) {
                 console.error(error);
-                terminal.writeln(`Error: ${error}`);
+                writeWordWarp(terminal, `Error: ${error}`);
             }
             
             terminal.writeln("");
@@ -311,6 +311,19 @@
             wait = false;
         });
 
+    }
+
+    function writeWordWarp(terminal, dataStr) {
+        let resp = dataStr?.replace(/§[0-9A-FK-OR]/gi, "") ?? "";
+        let rowLen = terminal.cols;
+        // word warp effect
+        for (let quota = resp.length; quota > 0; quota-=rowLen) {
+            terminal.writeln(`${resp.slice(0, rowLen)}`);
+            if (resp.length > rowLen) {
+                resp = resp.slice(rowLen);
+                terminal.write(" ");
+            }
+        }
     }
 
     function terminalClose() {

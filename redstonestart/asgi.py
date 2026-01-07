@@ -12,6 +12,8 @@ from channels.auth import AuthMiddlewareStack
 from django.core.asgi import get_asgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'redstonestart.settings')
+
+# get_asgi_application need to be called first before instantiating ProtocolTypeRouter 
 asgi_application = get_asgi_application()
 
 from channels.routing import ProtocolTypeRouter, URLRouter
@@ -19,7 +21,6 @@ from channels.security.websocket import AllowedHostsOriginValidator
 
 from webapp.websocket_urls import urlpatterns
 
-# application = get_asgi_application()
 application = ProtocolTypeRouter({
     "http": asgi_application,
     "websocket": AllowedHostsOriginValidator(
