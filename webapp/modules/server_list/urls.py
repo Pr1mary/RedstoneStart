@@ -2,7 +2,7 @@
 from django.urls import path
 from .views import (
     ServerManagerView, ServerManagerDetailView, ServerManagerInviteView,
-    ServerManagerInviteDetailsView, ServerManagerStatusView
+    ServerManagerInviteDetailsView, ServerManagerStatusView,
 )
 urlpatterns = [
     path('', ServerManagerView.as_view(), name="server_list"),

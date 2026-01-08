@@ -44,6 +44,7 @@ else:
 # Application definition
 
 INSTALLED_APPS = [
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -90,8 +91,8 @@ STATICFILES_DIRS = [
     BASE_DIR.joinpath("webapp").joinpath("static")
 ]
 
+ASGI_APPLICATION = 'redstonestart.asgi.application'
 WSGI_APPLICATION = 'redstonestart.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases

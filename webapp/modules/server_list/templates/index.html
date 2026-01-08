@@ -153,6 +153,11 @@
                 </div>
             </div>
             <div class="modal-footer">
+                <button id="shell-server-btn" type="button" class="btn btn-secondary me-auto" data-bs-toggle="modal"
+                data-bs-target="#shellservermodal" disabled>
+                    <span class="mdi mdi-console"></span>
+                    Shell
+                </button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-danger" id="delete-server-btn" onclick="deleteServer()">Delete Server</button>
             </div>
@@ -185,7 +190,29 @@
     </div>
 </div>
 
+<div id="shellservermodal" class="modal fade" tabindex="-1" aria-labelledby="shellservermodallabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="shellservermodallabel">Server Shell</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="terminal"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+    let terminal = null;
+    let socket = null;
+    let count = 0;
+    let currServerId = null;
+
     $("document").ready(() => {
         const detail_modal = $("#detailservermodal");
         detail_modal.on("show.bs.modal", detailServer);
@@ -193,11 +220,116 @@
         const invite_modal = $("#serverinvitemodal");
         invite_modal.on("show.bs.modal", inviteDetail);
 
+        const shell_modal = $("#shellservermodal");
+        shell_modal.on("show.bs.modal", terminalProcess);
+        shell_modal.on("hide.bs.modal", terminalClose);
+
         const refresh_spinner = $("#refresh-spinner");
         refresh_spinner.hide();
         const refresh_logo = $("#refresh-logo");
         refresh_logo.show();
+
+        console.log(terminal);
     });
+
+    function terminalProcess(event) {
+
+        const server_id = event.relatedTarget.getAttribute('data-bs-server-id');
+
+        // setup terminal process
+        terminal = new Terminal({
+            cols: 50
+        });
+        terminal.open($("#terminal")[0]);
+        console.log(terminal.rows, terminal.cols);
+
+        // setup websocket flow
+        socket = new WebSocket(`ws://${window.location.host}/servermanager/rconshell/`);
+
+        // terminal input event
+        let command = "";
+        let wait = false;
+        terminal.onData(chunk => {
+            const disableChar = ["\x1b[C","\x1b[A","\x1b[D","\x1b[B"];
+            const actionChar = ["\x7f"];
+            try {
+                if (wait ||
+                disableChar.indexOf(chunk) > -1 ||
+                (actionChar.indexOf(chunk) > -1 && command === "")) {
+                    return;
+                } else if (chunk === "\x7f") {
+                    terminal.write("\b \b");
+                    command = command.slice(0,-1);
+                } else if (chunk === "\r" && command === "") {
+                    terminal.writeln("");
+                    terminal.writeln("");
+                    terminal.write("/> ");
+                } else if (chunk === "\r") {
+                    const cmdData = {
+                        "server_id": server_id,
+                        "command": command
+                    };
+                    socket.send(JSON.stringify(cmdData));
+                    command = "";
+                    wait = true;
+                    terminal.writeln("");
+                } else {
+                    terminal.write(chunk);
+                    command += chunk;
+                }       
+            } catch (error) {
+                console.error(error)
+            }
+        });
+
+        // socket open event
+        socket.addEventListener("open", event => {
+            terminal.writeln("//=====================\\\\");
+            terminal.writeln("||  Server connected!  ||");
+            terminal.writeln("\\\\=====================//");
+            terminal.writeln("");
+            terminal.write("/> ");
+        });
+
+        // socket message event
+        socket.addEventListener("message", event => {
+
+            try {
+                const data = JSON.parse(event.data);
+                if (data.err) throw "Command Error";
+                if (!Array.isArray(data.resp)) throw "";
+                for (const rawResp of data.resp) {
+                    writeWordWarp(terminal, rawResp);
+                }
+            } catch (error) {
+                console.error(error);
+                writeWordWarp(terminal, `Error: ${error}`);
+            }
+            
+            terminal.writeln("");
+            terminal.write("/> ");
+            wait = false;
+        });
+
+    }
+
+    function writeWordWarp(terminal, dataStr) {
+        let resp = dataStr?.replace(/§[0-9A-FK-OR]/gi, "") ?? "";
+        let rowLen = terminal.cols;
+        // word warp effect
+        for (let quota = resp.length; quota > 0; quota-=rowLen) {
+            terminal.writeln(`${resp.slice(0, rowLen)}`);
+            if (resp.length > rowLen) {
+                resp = resp.slice(rowLen);
+                terminal.write(" ");
+            }
+        }
+    }
+
+    function terminalClose() {
+        if (terminal) terminal.dispose();
+        if (socket) socket.close();
+    }
 
     function refreshStatus(btn_id){
         const addServerBtn = $("#add-server-btn")
@@ -366,6 +498,10 @@
 
             const resp_data = await resp.json();
 
+            // inject server id
+            const shell_button = $("#shell-server-btn");
+            shell_button.attr("data-bs-server-id", resp_data["id"]);
+
             // section for edit server details
             const edit_server_name_form = $("#edit-server-name");
             edit_server_name_form.val(resp_data["name"]);
@@ -385,11 +521,15 @@
 
             const is_online_badge = $("#server-status-online");
             const is_offline_badge = $("#server-status-offline");
+            const shell_btn = $("#shell-server-btn");
             const is_online = resp_data["active"];
+            
             if(is_online){
+                shell_btn.prop("disabled", false);
                 is_online_badge.show();
                 is_offline_badge.hide();
             }else{
+                shell_btn.prop("disabled", true);
                 is_online_badge.hide();
                 is_offline_badge.show();
             }

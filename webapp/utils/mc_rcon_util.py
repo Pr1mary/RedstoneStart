@@ -26,7 +26,7 @@ class MCRconUtil:
                 print("resp: [{}] >> {}".format(command, resp_cmd))
         except Exception as err:
             print("Error mc rcon: {}".format(err))
-            resp_cmd = "[ERROR]"
+            resp_cmd = "[ERROR] {}".format(err)
         
         endtime = datetime.now().timestamp()
         deltatime = endtime-starttime
@@ -157,3 +157,12 @@ class MCRconUtil:
             return False
         
         return True
+    
+    def rawCmd(self, command: str):
+        
+        if not isinstance(command, str):
+            raise Exception("Command must be a string and must not be empty")
+
+        resp_cmd = self.__command(command)
+        
+        return resp_cmd
