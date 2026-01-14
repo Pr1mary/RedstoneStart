@@ -6,8 +6,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.conf import settings
 from django.urls import reverse_lazy
 from webapp.utils.mc_rcon_util import MCRconUtil
-from multiprocessing import Process, Pool
+from multiprocessing import Process, Pool, Manager
 from django.db import connection
+from channels.generic.websocket import WebsocketConsumer
 
 import random, string, json
 
@@ -352,6 +353,56 @@ class ServerManagerStatusView(View):
 
         except Exception as err:
             print("Error update server status: {}".format(err))
+        
+        finally:
+            connection.close()
+
+class ServerManagerRconShellView(WebsocketConsumer):
+
+    def connect(self):
+        self.accept()
+
+    def receive(self, text_data = None, bytes_data = None):
+
+        data:dict = json.loads(text_data)
+        shared_dict = Manager().dict()
+
+        server_update_process = Process(target=self.__rawProcess, args=[data.get("server_id"), data.get("command"), shared_dict])
+        server_update_process.start()
+        server_update_process.join()
+        respMsg = shared_dict.get("resp").split("\n") if shared_dict.get("resp") is not None else []
+
+        self.send(json.dumps({
+            "err": shared_dict.get("err") != None,
+            "resp": respMsg
+        }))
+        
+        return super().receive(text_data, bytes_data)
+
+    def __rawProcess(self, server_id: string, command: string, return_dict: dict):
+
+        try:
+            connection.close()
+
+            if not server_id:
+                raise Exception("Server id is empty")
+            
+            server_details = ServerList.objects.filter(pk=server_id).first()
+            if not server_details:
+                raise Exception("Server not found")
+
+            server_address = server_details.server_url
+            server_secret = server_details.server_secret
+            server_is_vanilla = server_details.server_is_vanilla
+
+            mcrcon = MCRconUtil(server_address, server_secret, is_vanilla=server_is_vanilla)
+            return_dict["err"] = None
+            return_dict["resp"] = mcrcon.rawCmd(command)
+
+        except Exception as err:
+
+            return_dict["err"] = err
+            return_dict["resp"] = None
         
         finally:
             connection.close()
