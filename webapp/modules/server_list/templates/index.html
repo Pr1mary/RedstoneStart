@@ -242,10 +242,13 @@
         });
         terminal.open($("#terminal")[0]);
         console.log(terminal.rows, terminal.cols);
-
+        
         // setup websocket flow
-        socket = new WebSocket(`ws://${window.location.host}/servermanager/rconshell/`);
+        const socket_protocol = window.location.protocol === "http:" ? "ws:" : "wss:";
+        socket = new WebSocket(`${socket_protocol}//${window.location.host}/servermanager/rconshell/`);
 
+
+            
         // terminal input event
         let command = "";
         let wait = false;
