@@ -367,14 +367,14 @@
         }).done(data => {
             // abort of failed from server
             if(!data.status_done){
-                alert("Error: failed to generate invite code from server")
+                alert("Error: failed to refresh server status from server")
                 return
             }
             
             // refresh window after getting latest server status
             location.reload()
         }).fail(() => {
-            alert("Error: failed to generate invite code from server")
+            alert("Error: failed to refresh server status from server")
         }).always(() => {
             const refresh_btn = $("#"+btn_id)
             refresh_btn.prop("disabled", false)
@@ -410,14 +410,14 @@
         }).done(data => {
             // abort of failed from server
             if(!data.invite_code){
-                alert("Error: failed to refresh server status from server")
+                alert("Error: failed to generate invite code from server")
                 return
             }
             
             // refresh page after delete success
             location.reload()
         }).fail(() => {
-            alert("Error: failed to refresh server status")
+            alert("Error: failed to generate invite code from server")
         })
     }
 
