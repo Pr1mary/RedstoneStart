@@ -2,7 +2,7 @@
 
 {% block bodydoc %}
 
-<div id="content">
+<div id="content" class="container">
 
     {% if server_list %}
         <div class="card">
@@ -70,7 +70,7 @@
                                 <span class="badge text-bg-primary">Outstanding</span>
                             {% endif %}
                             </td>
-                            <td>
+                            <td class="d-flex justify-content-end">
                                 <button class="btn btn-outline-primary"
                                 data-bs-toggle="modal" data-bs-target="#detailplayermodal"
                                 data-bs-player-url="{% url 'player_details' player_server.id %}"
