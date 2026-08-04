@@ -6,8 +6,15 @@ body {
 }
 
 #sidebar {
-    /* height: 100vh; */
+    width: 280px;
+    /* height: 100vh;
     height: -moz-calc(100vh - 72px);
     height: -webkit-calc(100vh - 72px);
-    height: calc(100vh - 72px);
+    height: calc(100vh - 72px); */
+}
+
+#mainsect {
+    height: -moz-calc(100vh);
+    height: -webkit-calc(100vh);
+    height: 100vh;
 }
