@@ -66,7 +66,8 @@ class PlayerManagerView(LoginRequiredMixin, View):
             player_detail = {
                 "id": player.pk,
                 "name": player.player_invited.player_name,
-                "status": status_name, 
+                "status": status_name,
+                "is_deleted": player.is_deleted,
                 "joined_at": player.created_at,
                 "created_at": player.player_invited.created_at
             }
@@ -286,16 +287,20 @@ class PlayerManagerDetailView(View):
             server_id = player_server_map.server_joined.pk
             player_name = player_details.player_name
 
-            player_server_map.delete()
+            # flag delete before delete player process
+            player_server_map.is_deleted = True
+            player_server_map.save()
 
+            # delete player on minecraft server
+            player_mapping_process = Process(target=self.__remove_whitelist_player, args=[server_id, player_name])
+            player_mapping_process.start()
+
+            # delete player data
+            player_server_map.delete()
             if player_server_map_count_before <= 1:
                 player_details.delete()
 
-            player_mapping_process = Process(target=self.__remove_whitelist_player, args=[server_id, player_name])
-            player_mapping_process.start()
-            
             resp_data["deleted"] = True
-
             return JsonResponse(resp_data)
 
         except Exception as err:
@@ -437,6 +442,10 @@ class PlayerSyncManagerView(View):
                         created_by = request.user,
                         updated_by = request.user,
                     )
+                elif player_mapping.is_deleted:
+                    player_mapping.delete()
+                    if player_data.player_server_map.all().count() <= 0:
+                        player_data.delete()
                 elif is_banned:
                     player_mapping.banned_status = True
                     player_mapping.save()

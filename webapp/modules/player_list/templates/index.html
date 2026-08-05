@@ -71,12 +71,18 @@
                             {% endif %}
                             </td>
                             <td class="d-flex justify-content-end">
-                                <button class="btn btn-outline-primary"
-                                data-bs-toggle="modal" data-bs-target="#detailplayermodal"
-                                data-bs-player-url="{% url 'player_details' player_server.id %}"
-                                data-bs-player-server-id="{{ player_server.id }}">
-                                    Details
-                                </button>
+                                {% if player_server.is_deleted %}
+                                    <button class="btn btn-outline-danger" disabled>
+                                        Deleted
+                                    </button>
+                                {% else %}
+                                    <button class="btn btn-outline-primary"
+                                    data-bs-toggle="modal" data-bs-target="#detailplayermodal"
+                                    data-bs-player-url="{% url 'player_details' player_server.id %}"
+                                    data-bs-player-server-id="{{ player_server.id }}">
+                                        Details
+                                    </button>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
