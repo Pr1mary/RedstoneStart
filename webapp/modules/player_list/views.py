@@ -281,24 +281,11 @@ class PlayerManagerDetailView(View):
             if not player_server_map or not player_server_map.player_invited:
                 raise Exception("Player for current server not found")
 
-            player_details = player_server_map.player_invited
-            player_server_map_count_before = player_details.player_server_map.all().count()
+            # player_details = player_server_map.player_invited
 
-            server_id = player_server_map.server_joined.pk
-            player_name = player_details.player_name
+            player_manager_core = PlayerManagerCore()
 
-            # flag delete before delete player process
-            player_server_map.is_deleted = True
-            player_server_map.save()
-
-            # delete player on minecraft server
-            player_mapping_process = Process(target=self.__remove_whitelist_player, args=[server_id, player_name])
-            player_mapping_process.start()
-
-            # delete player data
-            player_server_map.delete()
-            if player_server_map_count_before <= 1:
-                player_details.delete()
+            player_manager_core.deletePlayer(player_server_map)
 
             resp_data["deleted"] = True
             return JsonResponse(resp_data)
@@ -443,9 +430,8 @@ class PlayerSyncManagerView(View):
                         updated_by = request.user,
                     )
                 elif player_mapping.is_deleted:
-                    player_mapping.delete()
-                    if player_data.player_server_map.all().count() <= 0:
-                        player_data.delete()
+                    player_manager_core = PlayerManagerCore()
+                    player_manager_core.deletePlayer(player_mapping, player_data)
                 elif is_banned:
                     player_mapping.banned_status = True
                     player_mapping.save()
@@ -460,6 +446,29 @@ class PlayerSyncManagerView(View):
             resp_data["success"] = False
 
         return JsonResponse(resp_data)
+
+class PlayerManagerCore():
+
+    def deletePlayer(self, player_server_map: PlayerServerMap, player_data: PlayerList = None):
+
+        player_details = player_server_map.player_invited if not player_data else player_data
+        player_server_map_count_before = player_details.player_server_map.all().count()
+        
+        server_id = player_server_map.server_joined.pk
+        player_name = player_details.player_name
+
+        # flag delete before delete player process
+        player_server_map.is_deleted = True
+        player_server_map.save()
+
+        # delete player on minecraft server
+        player_mapping_process = Process(target=self.__remove_whitelist_player, args=[server_id, player_name])
+        player_mapping_process.start()
+
+        # delete player data
+        player_server_map.delete()
+        if player_server_map_count_before <= 1:
+            player_details.delete()
     
 class PlayerHandler():
 
