@@ -3,11 +3,11 @@
     <span class="navbar-brand text-white text-decoration-none fs-4 fw-bold">RedstoneStart</span>
     <hr>
     <ul class="nav nav-pills flex-column mb-auto">
-        <li class="nav-item">
+        <!-- <li class="nav-item">
             <a class="nav-link text-white {% if page_title == 'dasboard'%} active {% endif %} disabled" href="#">
                 <span class="mdi mdi-speedometer"></span> Dashboard
             </a>
-        </li>
+        </li> -->
         <li class="nav-item">
             <a class="nav-link text-white {% if page_title == 'player_manager'%} active {% endif %}" href="/playermanager">
                 <span class="mdi mdi-account-multiple"></span> Player List
@@ -32,11 +32,11 @@
                 <span class="mdi mdi-account"></span> Account Details
             </a>
         </li>
-        <li>
+        <!-- <li>
             <a class="dropdown-item disabled" href="#">
                 <span class="mdi mdi-settings"></span> Settings
             </a>
-        </li>
+        </li> -->
         <li><hr class="dropdown-divider"></li>
         <li>
             <form method="POST" action="{% url 'auth_logout' %}">
