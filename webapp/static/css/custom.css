@@ -18,3 +18,14 @@ body {
     height: -webkit-calc(100vh);
     height: 100vh;
 }
+
+.login_form input[type="text"] {
+    margin-bottom: -1px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.login_form input[type="password"] {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
