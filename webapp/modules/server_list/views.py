@@ -64,43 +64,13 @@ class ServerManagerView(LoginRequiredMixin, View):
             )
             server_list.save()
 
-            server_update_process = Process(target=self.__update_online_status, args=[server_list.pk])
-            server_update_process.start()
+            server_handler = ServerHandler()
+            server_handler.update_server_status(server_list.pk)
 
         except Exception as err:
             print(f"Error when storing server: {err.args}")
 
         return redirect("server_list")
-    
-    def __update_online_status(self, server_id):
-
-        try:
-            connection.close()
-            
-            if not server_id:
-                raise Exception("Server id is empty")
-            
-            server_details = ServerList.objects.filter(pk=server_id).first()
-            if not server_details:
-                raise Exception("Server not found")
-
-            server_address = server_details.server_url
-            server_secret = server_details.server_secret
-            server_is_vanilla = server_details.server_is_vanilla
-
-            mcrcon = MCRconUtil(server_address, server_secret, is_vanilla=server_is_vanilla)
-            server_online = mcrcon.isOnline()
-
-            server_details.is_active = True if server_online else False
-            server_details.save()
-
-            print("Update server status success")
-
-        except Exception as err:
-            print("Error update server status: {}".format(err))
-        
-        finally:
-            connection.close()
     
 class ServerManagerDetailView(View):
 
@@ -315,10 +285,10 @@ class ServerManagerStatusView(View):
 
             resp_list = []
 
+            server_handler = ServerHandler()
+
             for server_details in server_list:
-                server_update_process = Process(target=self.__update_online_status, args=[server_details.pk])
-                server_update_process.start()
-                server_update_process.join()
+                server_handler.update_server_status_sync(server_details.pk)
 
             resp_data["status_done"] = True
 
@@ -327,7 +297,48 @@ class ServerManagerStatusView(View):
         except Exception as err:
             return JsonResponse(resp_data)
 
-    def __update_online_status(self, server_id):
+class ServerManagerRconShellView(WebsocketConsumer):
+
+    def connect(self):
+        self.accept()
+
+    def receive(self, text_data = None, bytes_data = None):
+
+        data:dict = json.loads(text_data)
+
+        server_handler = ServerHandler()
+        respData, respErr = server_handler.send_raw_command(data.get("server_id"), data.get("command"))
+
+        self.send(json.dumps({
+            "err": respErr,
+            "resp": respData
+        }))
+        
+        return super().receive(text_data, bytes_data)
+
+class ServerHandler():
+    
+    def send_raw_command(self, server_id, command):
+        shared_dict = Manager().dict()
+
+        server_update_process = Process(target=self.__raw_command, args=[server_id, command, shared_dict])
+        server_update_process.start()
+        server_update_process.join()
+        respData = shared_dict.get("resp").split("\n") if shared_dict.get("resp") is not None else []
+        respErr = shared_dict.get("err") != None
+
+        return respData, respErr
+
+    def update_server_status(self, server_id):
+        server_update_process = Process(target=self.__update_server_status, args=[server_id])
+        server_update_process.start()
+
+    def update_server_status_sync(self, server_id):
+        server_update_process = Process(target=self.__update_server_status, args=[server_id])
+        server_update_process.start()
+        server_update_process.join()
+
+    def __update_server_status(self, server_id):
 
         try:
             connection.close()
@@ -357,29 +368,7 @@ class ServerManagerStatusView(View):
         finally:
             connection.close()
 
-class ServerManagerRconShellView(WebsocketConsumer):
-
-    def connect(self):
-        self.accept()
-
-    def receive(self, text_data = None, bytes_data = None):
-
-        data:dict = json.loads(text_data)
-        shared_dict = Manager().dict()
-
-        server_update_process = Process(target=self.__rawProcess, args=[data.get("server_id"), data.get("command"), shared_dict])
-        server_update_process.start()
-        server_update_process.join()
-        respMsg = shared_dict.get("resp").split("\n") if shared_dict.get("resp") is not None else []
-
-        self.send(json.dumps({
-            "err": shared_dict.get("err") != None,
-            "resp": respMsg
-        }))
-        
-        return super().receive(text_data, bytes_data)
-
-    def __rawProcess(self, server_id: string, command: string, return_dict: dict):
+    def __raw_command(self, server_id, command, return_dict):
 
         try:
             connection.close()

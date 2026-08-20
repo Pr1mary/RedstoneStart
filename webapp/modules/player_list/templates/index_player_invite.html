@@ -17,7 +17,7 @@
                 </div>
                 <div class="mb-3">
                     <label for="invite-code" class="col-form-label">Invite Code:</label>
-                    <input type="text" class="form-control" id="invite-code" name="invite-code" required {% if invite_code %} value="{{ invite_code }}" {% endif %}>
+                    <input type="text" class="form-control" id="invite-code" name="invite-code" required {% if invite_code %} value="{{ invite_code }}" disabled {% endif %}>
                 </div>
                 <div class="mb-3">
                     <input type="submit" class="btn btn-primary">
