@@ -18,8 +18,8 @@
     {% endif %}
     <form class="login_form" action="{% url 'auth_login' %}" method="post">
         {% csrf_token %}
-        <h1 class="mb-3 fw-bold">RedstoneStart</h1>
-        <h3 class="mb-5">Sign into your account</h3>
+        <h1 class="mb-3 fw-bold text-center">RedstoneStart</h1>
+        <h3 class="mb-5 text-center">Sign into your account</h3>
         <div class="form-floating">
             <input class="form-control" type="text" name="username" id="username" placeholder="username">
             <label for="username">Username</label>
@@ -38,7 +38,11 @@
         <div class="mb-5">
             <input type="submit" class="form-control md-3 btn btn-primary" value="Sign In">
         </div>
-        <small class="">Do not have an account? <a class="text-decoration-none" href="{% url 'auth_register' %}">Sign Up</a></small>
+        <div class="text-center">
+            <small>
+                Do not have an account? <a class="text-decoration-none" href="{% url 'auth_register' %}">Sign Up</a>
+            </small>
+        </div>
     </form>
 
 </div>

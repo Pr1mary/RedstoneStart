@@ -19,6 +19,10 @@ body {
     height: 100vh;
 }
 
+.login_form .form-floating:focus-within {
+    z-index: 2;
+}
+
 .login_form input[type="text"] {
     margin-bottom: -1px;
     border-bottom-left-radius: 0;
