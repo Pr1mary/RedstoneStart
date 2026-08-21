@@ -2,30 +2,31 @@
 
 {% block bodydoc %}
 
-<div id="content container" style="width: 23rem; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
+{% if messages %}
+    {% for message in messages %}
+        {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+        <div class="signup-signin-notify alert alert-danger alert-dismissible fade show" role="alert">
+        {% elif message.level == DEFAULT_MESSAGE_LEVELS.INFO %}
+        <div class="signup-signin-notify alert alert-success alert-dismissible fade show" role="alert">
+        {% endif %}
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
 
-    {% if messages %}
-        {% for message in messages %}
-            {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            {% elif message.level == DEFAULT_MESSAGE_LEVELS.INFO %}
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {% endif %}
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="close"></button>
-            </div>
-        {% endfor %}
-    {% endif %}
+<div class="signup-signin-container">
+
     <form class="login_form" action="{% url 'auth_login' %}" method="post">
         {% csrf_token %}
         <h1 class="mb-3 fw-bold text-center">RedstoneStart</h1>
         <h3 class="mb-5 text-center">Sign into your account</h3>
         <div class="form-floating">
-            <input class="form-control" type="text" name="username" id="username" placeholder="username">
+            <input class="form-control" type="text" name="username" id="username" placeholder="username" required>
             <label for="username">Username</label>
         </div>
         <div class="form-floating mb-3">
-            <input class="form-control" type="password" name="password" id="password" placeholder="password">
+            <input class="form-control" type="password" name="password" id="password" placeholder="password" required>
             <label for="password">Password</label>
         </div>
         <div class="row mb-3">
