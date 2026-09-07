@@ -20,11 +20,13 @@
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
     <script src="{% static 'js/jquery-3.7.1.min.js' %}"></script>
 
+    {% include 'components/navbar.html' %}
+
     <div id="mainsect" class="d-flex">
 
         {% include 'components/sidebar.html' %}
 
-        <div class="p-3 flex-grow-1">
+        <div class="content p-3 flex-grow-1">
             {% block bodydoc %}
             {% endblock %}
         </div>
