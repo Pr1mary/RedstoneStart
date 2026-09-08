@@ -1,52 +1,22 @@
 
-<div class="d-flex flex-column flex-shrink-0 p-3 text-white bg-light" id="sidebar">
-    <!-- <span class="navbar-brand text-black text-decoration-none fs-4 fw-bold">RedstoneStart</span>
-    <hr> -->
-    <ul class="nav nav-pills flex-column mb-auto">
-        <!-- <li class="nav-item">
-            <a class="nav-link text-white {% if page_title == 'dasboard'%} active {% endif %} disabled" href="#">
+<div class="d-flex flex-column flex-shrink-0 border-end bg-light" id="sidebar">
+    <ul class="nav flex-column mb-auto">
+        <span class="m-3 mb-2 text-secondary">Home</span>
+        <li class="nav-item">
+            <a class="nav-link {% if page_title == 'dasboard'%} active {% endif %} disabled" href="#">
                 <span class="mdi mdi-speedometer"></span> Dashboard
             </a>
-        </li> -->
+        </li>
+        <span class="m-3 mb-2 text-secondary">Management</span>
         <li class="nav-item">
-            <a class="nav-link text-black {% if page_title == 'player_manager'%} active {% endif %}" href="/playermanager">
+            <a class="nav-link {% if page_title == 'player_manager'%} active {% endif %}" href="/playermanager">
                 <span class="mdi mdi-account-multiple"></span> Player List
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link text-black {% if page_title == 'server_manager'%} active {% endif %}" href="/servermanager">
+            <a class="nav-link {% if page_title == 'server_manager'%} active {% endif %}" href="/servermanager">
                 <span class="mdi mdi-server"></span> Server List
             </a>
         </li>
     </ul>
-    <!-- <hr>
-    <div class="dropdown">
-        <a class="text-white dropdown-toggle text-decoration-none" type="button" id="dropdownAccount"
-        data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false">
-            <img class="rounded-circle" src="/static/img/xp.jpg" height="32" width="32" alt="{{ user }} profile picture">
-            <strong>{{ user }}</strong>
-        </a>
-        <ul class="dropdown-menu dropdown-menu-lg-end" aria-labelledby="dropdownAccount">
-        <li>
-            <a class="dropdown-item" href="{% url 'details_info' %}">
-                <span class="mdi mdi-account"></span> Account Details
-            </a>
-        </li>
-        <li>
-            <a class="dropdown-item disabled" href="#">
-                <span class="mdi mdi-settings"></span> Settings
-            </a>
-        </li>
-        <li><hr class="dropdown-divider"></li>
-        <li>
-            <form method="POST" action="{% url 'auth_logout' %}">
-            {% csrf_token %}
-            <button class="dropdown-item link-danger btn btn-outline-danger" type="submit">
-                <span class="mdi mdi-logout"></span> Logout
-            </button>
-            </form>
-        </li>
-        </ul>
-    </div> -->
-
 </div>

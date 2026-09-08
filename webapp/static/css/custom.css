@@ -6,17 +6,23 @@ body {
 }
 
 #sidebar {
-    width: 280px;
-    /* height: 100vh;
-    height: -moz-calc(100vh - 72px);
-    height: -webkit-calc(100vh - 72px);
-    height: calc(100vh - 72px); */
+    /* width: 30vh; */
+    height: 100vh;
+    position: fixed;
+    width: inherit;
+    /* height: -moz-calc(100vh - 46px);
+    height: -webkit-calc(100vh - 46px);
+    height: calc(100vh - 46px); */
+}
+
+#content {
+    /* width: 100vh; */
 }
 
 #mainsect {
-    height: -moz-calc(100vh);
-    height: -webkit-calc(100vh);
-    height: 100vh;
+    /* height: -moz-calc(100vh - 46px);
+    height: -webkit-calc(100vh - 46px);
+    height: calc(100vh - 46px); */
 }
 
 .login_form .form-floating:focus-within {
