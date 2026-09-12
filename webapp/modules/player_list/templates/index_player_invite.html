@@ -2,30 +2,34 @@
 
 {% block bodydoc %}
 
-<div id="content container ">
+<div class="invite-container">
 
-    <div class="card" style="width: 18rem; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
-        <div class="card-header">
-            <strong>Server Invite Request</strong>
+    {% if invite_code %}
+    <h3>
+        <strong>You have been invited!</strong>
+    </h3>
+    <form id="player_join_server" action="{% url 'player_join_server' %}" method="post">
+        {% csrf_token %}
+        
+        <div class="form-floating mb-3">
+            <input type="text" class="form-control" id="player-name" name="player-name" placeholder="player-name" required>
+            <label for="player-name" class="col-form-label">Player Name</label>
         </div>
-        <div class="card-body">
-            <form id="player_join_server" action="{% url 'player_join_server' %}" method="post">
-                {% csrf_token %}
-                <div class="mb-3">
-                    <label for="player-name" class="col-form-label">Player Name:</label>
-                    <input type="text" class="form-control" id="player-name" name="player-name" required>    
-                </div>
-                <div class="mb-3">
-                    <label for="invite-code" class="col-form-label">Invite Code:</label>
-                    <input type="text" class="form-control" id="invite-code" name="invite-code" required {% if invite_code %} value="{{ invite_code }}" disabled {% endif %}>
-                </div>
-                <div class="mb-3">
-                    <input type="submit" class="btn btn-primary">
-                </div>
-            </form>
+        <div class="mb-3">
+            <input type="text" class="form-control" id="invite-code" name="invite-code" value="{{ invite_code }}" hidden>
         </div>
-    </div>
-
+        <div class="mb-3">
+            <input type="submit" class="btn btn-primary">
+        </div>
+    </form>
+    {% else %}
+    <h1>
+        404
+    </h1>
+    <h3>
+        Invite code not found!
+    </h3>
+    {% endif %}
 </div>
 
 <script>

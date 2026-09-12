@@ -168,7 +168,13 @@ class PlayerJoinManagerView(View):
 
         req_data = request.GET
 
-        self.ctx["invite_code"] = req_data.get("invitecode")
+        invite_code = req_data.get("invitecode")
+        server_list = ServerList.objects.filter(server_invite_code=invite_code)
+
+        if server_list is None or len(server_list) == 0:
+            invite_code = None
+
+        self.ctx["invite_code"] = invite_code 
 
         return render(request, self.template, self.ctx)
 
