@@ -6,8 +6,68 @@ body {
 }
 
 #sidebar {
-    /* height: 100vh; */
-    height: -moz-calc(100vh - 72px);
-    height: -webkit-calc(100vh - 72px);
-    height: calc(100vh - 72px);
+    /* width: 30vh; */
+    height: 100vh;
+    position: fixed;
+    width: inherit;
+    /* height: -moz-calc(100vh - 46px);
+    height: -webkit-calc(100vh - 46px);
+    height: calc(100vh - 46px); */
+}
+
+#content {
+    /* width: 100vh; */
+}
+
+#mainsect {
+    /* height: -moz-calc(100vh - 46px);
+    height: -webkit-calc(100vh - 46px);
+    height: calc(100vh - 46px); */
+}
+
+.login_form .form-floating:focus-within {
+    z-index: 2;
+}
+
+.login_form input[type="text"] {
+    margin-bottom: -1px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.login_form input[type="password"] {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.signup-signin-notify {
+    width: 23rem;
+    position:absolute;
+    top: 30%;
+    left: 50%;
+    transform:translate(-50%, -50%);
+}
+
+.signup-signin-container {
+    width: 23rem;
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+}
+
+.invite-container {
+    width: 23rem;
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+}
+
+.invite-success-container {
+    width: 23rem;
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
 }

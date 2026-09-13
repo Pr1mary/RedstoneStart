@@ -2,36 +2,41 @@
 
 {% block bodydoc %}
 
-<div id="content container ">
+<div class="invite-container">
 
-    <div class="card" style="width: 18rem; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
-        <div class="card-header">
-            <strong>Server Invite Request</strong>
-        </div>
-        <div class="card-body">
-            <form id="player_join_server" action="{% url 'player_join_server' %}" method="post">
-                {% csrf_token %}
-                <div class="mb-3">
-                    <label for="player-name" class="col-form-label">Player Name:</label>
-                    <input type="text" class="form-control" id="player-name" name="player-name" required>    
-                </div>
-                <div class="mb-3">
-                    <label for="invite-code" class="col-form-label">Invite Code:</label>
-                    <input type="text" class="form-control" id="invite-code" name="invite-code" required {% if invite_code %} value="{{ invite_code }}" disabled {% endif %}>
-                </div>
-                <div class="mb-3">
-                    <input type="submit" class="btn btn-primary">
-                </div>
-            </form>
-        </div>
+    {% if invite_code %}
+    <div  class="mb-5 text-center">
+        <h3>
+            You have been invited to:
+        </h3>
+        <h1>
+            <strong>{{ server_name }}</strong>
+        </h1>
     </div>
-
+    <form id="player_join_server" action="{% url 'player_join_server' %}" method="post">
+        {% csrf_token %}
+        
+        <div class="form-floating mb-3">
+            <input type="text" class="form-control" id="player-name" name="player-name" placeholder="player-name" required>
+            <label for="player-name" class="col-form-label">Player Name</label>
+        </div>
+        <div class="mb-4">
+            <input type="text" class="form-control" id="invite-code" name="invite-code" value="{{ invite_code }}" hidden>
+        </div>
+        <div class="mb-3">
+            <input type="submit" class="form-control btn btn-primary" value="Join Server">
+        </div>
+    </form>
+    {% else %}
+    <div class="text-center">
+        <h2>
+            <strong>404 - Invalid invite link!</strong>
+        </h2>
+        <p>
+            Ask the server owner to give you the correct ones!
+        </p>
+    </div>
+    {% endif %}
 </div>
-
-<script>
-    $("#player_join_server").submit(event => {
-        alert("Join request has been sent!")
-    });
-</script>
 
 {% endblock %}

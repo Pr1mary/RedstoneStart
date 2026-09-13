@@ -168,10 +168,19 @@ class PlayerJoinManagerView(View):
 
         req_data = request.GET
 
-        self.ctx["invite_code"] = req_data.get("invitecode")
+        invite_code = req_data.get("invitecode")
+        server_list = ServerList.objects.filter(server_invite_code=invite_code)
+        server_name = None
+
+        if server_list is None or len(server_list) == 0:
+            invite_code = None
+        else:
+            server_name = server_list.first().server_name
+
+        self.ctx["invite_code"] = invite_code
+        self.ctx["server_name"] = server_name
 
         return render(request, self.template, self.ctx)
-
     
     def post(self, request: HttpRequest, *args, **kwargs):
 
@@ -214,11 +223,22 @@ class PlayerJoinManagerView(View):
             player_handler = PlayerHandler()
             player_handler.add_whitelist_player(player_server_map.pk)
 
+            return redirect("player_join_server_success")
+
         except Exception as err:
             print(f"Error when storing server: {err.args}")
+            return redirect("player_join_server")
 
-        return redirect("player_join_server")
-    
+class PlayerJoinManagerSuccessView(View):
+    template = "modules/player_list/templates/index_player_success.html"
+    ctx = {
+        "page_title": "player_invite_success"
+    }
+
+    def get(self, request: HttpRequest, *args, **kwargs):
+
+        return render(request, self.template, self.ctx)
+     
 class PlayerManagerDetailView(View):
 
     def get(self, request: HttpRequest, *args, **kwargs):
