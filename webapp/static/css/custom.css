@@ -63,3 +63,11 @@ body {
     left:50%;
     transform:translate(-50%, -50%);
 }
+
+.invite-success-container {
+    width: 23rem;
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+}

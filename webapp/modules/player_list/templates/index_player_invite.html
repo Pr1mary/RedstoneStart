@@ -5,9 +5,14 @@
 <div class="invite-container">
 
     {% if invite_code %}
-    <h3>
-        <strong>You have been invited!</strong>
-    </h3>
+    <div  class="mb-5 text-center">
+        <h3>
+            You have been invited to:
+        </h3>
+        <h1>
+            <strong>{{ server_name }}</strong>
+        </h1>
+    </div>
     <form id="player_join_server" action="{% url 'player_join_server' %}" method="post">
         {% csrf_token %}
         
@@ -15,27 +20,23 @@
             <input type="text" class="form-control" id="player-name" name="player-name" placeholder="player-name" required>
             <label for="player-name" class="col-form-label">Player Name</label>
         </div>
-        <div class="mb-3">
+        <div class="mb-4">
             <input type="text" class="form-control" id="invite-code" name="invite-code" value="{{ invite_code }}" hidden>
         </div>
         <div class="mb-3">
-            <input type="submit" class="btn btn-primary">
+            <input type="submit" class="form-control btn btn-primary" value="Join Server">
         </div>
     </form>
     {% else %}
-    <h1>
-        404
-    </h1>
-    <h3>
-        Invite code not found!
-    </h3>
+    <div class="text-center">
+        <h2>
+            <strong>404 - Invalid invite link!</strong>
+        </h2>
+        <p>
+            Ask the server owner to give you the correct ones!
+        </p>
+    </div>
     {% endif %}
 </div>
-
-<script>
-    $("#player_join_server").submit(event => {
-        alert("Join request has been sent!")
-    });
-</script>
 
 {% endblock %}
