@@ -41,6 +41,13 @@ if os.getenv("CSRF_TRUSTED_ORIGINS_LIST", ""):
 else:
     CSRF_TRUSTED_ORIGINS = ["*"]
 
+# Email definition
+ANYMAIL = {
+  "MAILTRAP_API_TOKEN": os.getenv("MAILTRAP_API_TOKEN", ""),
+}
+EMAIL_BACKEND = "anymail.backends.mailtrap.EmailBackend"
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "")
+
 # Application definition
 
 INSTALLED_APPS = [

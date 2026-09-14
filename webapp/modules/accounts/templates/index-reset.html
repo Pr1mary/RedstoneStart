@@ -1,0 +1,75 @@
+{% extends 'base_clean.html' %}
+
+{% block bodydoc %}
+
+    
+{% if messages %}
+    {% for message in messages %}
+        {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+        <div class="alert alert-danger" role="alert">
+        {% elif message.level == DEFAULT_MESSAGE_LEVELS.INFO %}
+        <div class="alert alert-success" role="alert">
+        {% endif %}
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="signup-signin-container">
+    <h3 class="mb-5 text-center">Password reset for: <strong>RedstoneStart</strong></h3>
+    <form id="player_join_server" action="{% url 'auth_reset' %}" method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="password" class="form-label">Password<span class="text-danger">*</span></label>
+            <input class="form-control" type="password" name="password" id="password" placeholder="Password" required>
+        </div>
+        <div class="mb-4">
+            <label for="confirm-password" class="form-label">Confirm Password<span class="text-danger">*</span></label>
+            <input class="form-control" type="password" name="confirm-password" id="confirm-password" placeholder="Confirm Password" required>
+            <small class="text-danger" id="match-pass-alert">Confirm password and password does not match!</small>
+        </div>
+        <div class="mb-5">
+            <input type="submit" class="form-control md-3 btn btn-primary" value="Reset Password">
+        </div>
+    </form>
+    <div class="text-center">
+        <small>
+            Already have an account? <a class="text-decoration-none" href="{% url 'auth_login' %}">Sign In</a>
+        </small>
+    </div>
+
+</div>
+
+<script>
+    <!-- set match pass and email to hidden before page completely loaded -->
+    $("#match-pass-alert").hide();
+    $("#match-email-alert").hide();
+
+    $("#confirm-password").on("input", () => {
+        const ver_pass = $("#password").val();
+        const curr_pass = $("#confirm-password").val();
+
+        if(ver_pass !== curr_pass){
+            $("#confirm-password").addClass("is-invalid");
+            $("#match-pass-alert").show();
+        }else{
+            $("#confirm-password").removeClass("is-invalid");
+            $("#match-pass-alert").hide();
+        }
+    });
+
+    $("#email").on("input", () => {
+        const email = $("#email").val();
+        const email_regex = /^[\w\-\.]+@([\w-]+\.)+[\w-]{2,}$/gm;
+
+        if(email_regex.exec(email)){
+            $("#email").removeClass("is-invalid");
+            $("#match-email-alert").hide();
+        }else{
+            $("#email").addClass("is-invalid");
+            $("#match-email-alert").show();
+        }
+    });
+</script>
+
+{% endblock %}
