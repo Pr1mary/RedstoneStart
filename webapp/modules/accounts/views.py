@@ -31,7 +31,7 @@ class UserLoginView(View):
         if form.is_valid():
             username = form.cleaned_data.get("username")
             password = form.cleaned_data.get("password")
-            remember_me = form.cleaned_data.get("remember-me")
+            remember_me = request.POST.get("remember-me") == "on"
             user = authenticate(request, username=username, password=password)
 
         if not user:       
@@ -39,8 +39,8 @@ class UserLoginView(View):
             return redirect("auth_login")
 
         login(request, user)
-        if not remember_me:
-            request.session.set_expiry(0)
+
+        request.session.set_expiry(None if remember_me else 0)
 
         return redirect("main_page")
     
