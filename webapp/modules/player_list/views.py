@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse, HttpRequest, HttpResponseRedirect
 from django.views.generic import View
 from .models import PlayerList, PlayerServerMap, ServerList
+from django.core.paginator import Paginator
 from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
@@ -21,14 +22,24 @@ class PlayerManagerView(LoginRequiredMixin, View):
 
     def get(self, request: HttpRequest, *args, **kwargs):
 
-        server_id = request.GET.get("server_id", None)
         username_target = request.GET.get("username", None)
         user_status = request.GET.get("status", None)
         curr_user = request.user
+
         try:
-            server_id = int(server_id)
+            server_id = int(request.GET.get("server_id", None))
         except:
             server_id = None
+
+        try:
+            page_qy = int(request.GET.get("page", 1))
+        except:
+            page_qy = 1
+
+        try:
+            size_qy = int(request.GET.get("size", 10))
+        except:
+            size_qy = 10
 
         curr_server_id = None
         server_list_parsed = []
@@ -57,7 +68,9 @@ class PlayerManagerView(LoginRequiredMixin, View):
             player_map_list = player_map_list.filter(banned_status=False, is_synced=True)
         
         player_server_detail_list = []
-        for player in player_map_list:
+        player_map_pages = Paginator(player_map_list, size_qy)
+        curr_player_map_page = player_map_pages.page(page_qy)
+        for player in curr_player_map_page.object_list:
 
             status_name = "ONLINE" if player.online_status else "OFFLINE"
             status_name = "BANNED" if player.banned_status else status_name
@@ -72,6 +85,15 @@ class PlayerManagerView(LoginRequiredMixin, View):
             }
             player_server_detail_list.append(player_detail)
 
+        self.ctx["page_details"] = {
+            "curr_page": page_qy,
+            "next_page": page_qy + 1,
+            "prev_page": page_qy - 1,
+            "curr_size": size_qy,
+            "range": player_map_pages.page_range,
+            "has_next": curr_player_map_page.has_next,
+            "has_prev": curr_player_map_page.has_previous
+        }
         self.ctx["server_list"] = server_list_parsed
         self.ctx["curr_server_id"] = curr_server_id
         self.ctx["curr_username_target"] = username_target if username_target else ""
