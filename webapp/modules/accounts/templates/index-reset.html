@@ -16,48 +16,42 @@
 {% endif %}
 
 <div class="signup-signin-container">
-    <h3 class="mb-5 text-center">Password reset for: <strong>RedstoneStart</strong></h3>
-    <form id="player_join_server" action="{% url 'auth_reset' %}" method="post">
+    <h3 class="mb-3"><strong>RedstoneStart</strong></h3>
+    <h5 class="mb-4">Insert your email for password reset</h5>
+    <form id="user_forgot_password" method="post">
         {% csrf_token %}
-        <div class="mb-3">
-            <label for="password" class="form-label">Password<span class="text-danger">*</span></label>
-            <input class="form-control" type="password" name="password" id="password" placeholder="Password" required>
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <div class="mb-3 form-floating">
+            <input class="form-control" type="email" name="email" id="id_email" placeholder="email" required>
+            <label for="email " class="form-label">Email<span class="text-danger">*</span></label>
+            {% for error in form.email.errors %}
+                <div class="invalid-feedback">
+                    {{ error }}
+                </div>
+            {% endfor %}
         </div>
-        <div class="mb-4">
-            <label for="confirm-password" class="form-label">Confirm Password<span class="text-danger">*</span></label>
-            <input class="form-control" type="password" name="confirm-password" id="confirm-password" placeholder="Confirm Password" required>
-            <small class="text-danger" id="match-pass-alert">Confirm password and password does not match!</small>
-        </div>
+        
         <div class="mb-5">
-            <input type="submit" class="form-control md-3 btn btn-primary" value="Reset Password">
+            <button type="submit" class="form-control md-3 btn btn-primary">
+                Reset Password
+            </button>
         </div>
     </form>
     <div class="text-center">
         <small>
-            Already have an account? <a class="text-decoration-none" href="{% url 'auth_login' %}">Sign In</a>
+            Remember the account? <a class="text-decoration-none" href="{% url 'auth_login' %}">Sign In</a>
         </small>
     </div>
 
 </div>
 
 <script>
-    <!-- set match pass and email to hidden before page completely loaded -->
-    $("#match-pass-alert").hide();
-    $("#match-email-alert").hide();
-
-    $("#confirm-password").on("input", () => {
-        const ver_pass = $("#password").val();
-        const curr_pass = $("#confirm-password").val();
-
-        if(ver_pass !== curr_pass){
-            $("#confirm-password").addClass("is-invalid");
-            $("#match-pass-alert").show();
-        }else{
-            $("#confirm-password").removeClass("is-invalid");
-            $("#match-pass-alert").hide();
-        }
-    });
-
     $("#email").on("input", () => {
         const email = $("#email").val();
         const email_regex = /^[\w\-\.]+@([\w-]+\.)+[\w-]{2,}$/gm;

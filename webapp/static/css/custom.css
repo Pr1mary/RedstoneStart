@@ -71,3 +71,11 @@ body {
     left:50%;
     transform:translate(-50%, -50%);
 }
+
+.reset-pass-container {
+    width: 25rem;
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+}
