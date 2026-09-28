@@ -2,13 +2,7 @@
 
 {% block bodydoc %}
 
-<div id="content container ">
-
-    <div class="card" style="width: 18rem; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
-        <div class="card-header">
-            <strong>User Register</strong>
-        </div>
-        <div class="card-body">
+    
             {% if messages %}
                 {% for message in messages %}
                     {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
@@ -20,34 +14,36 @@
                     </div>
                 {% endfor %}
             {% endif %}
-            <form id="player_join_server" action="{% url 'auth_register' %}" method="post">
-                {% csrf_token %}
-                <div class="mb-3">
-                    <label for="email" class="form-label">Email:</label>
-                    <input class="form-control" type="text" name="email" id="email" required>
-                    <small class="text-danger" id="match-email-alert">Email is not valid</small>
-                </div>
-                <div class="mb-3">
-                    <label for="username" class="form-label">Username:</label>
-                    <input class="form-control" type="text" name="username" id="username" required>
-                </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label">Password:</label>
-                    <input class="form-control" type="password" name="password" id="password" required>
-                </div>
-                <div class="mb-3">
-                    <label for="confirm-password" class="form-label">Confirm Password:</label>
-                    <input class="form-control" type="password" name="confirm-password" id="confirm-password" required>
-                    <small class="text-danger" id="match-pass-alert">Confirm password and password does not match!</small>
-                </div>
-                <div class="mb-3">
-                    <input type="submit" class="form-control md-3 btn btn-primary" value="Register">
-                </div>
-            </form>
+<div class="signup-signin-container">
+    <h3 class="mb-5 text-center">Sign up for <strong>RedstoneStart</strong></h3>
+    <form id="player_join_server" action="{% url 'auth_register' %}" method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="email" class="form-label">Email<span class="text-danger">*</span></label>
+            <input class="form-control" type="text" name="email" id="email" placeholder="example@email.com" required>
+            <small class="text-danger" id="match-email-alert">Email is not valid</small>
         </div>
-        <div class="card-footer">
-            <small>Already have an account? <a href="{% url 'auth_login' %}">login here</a></small>
+        <div class="mb-3">
+            <label for="username" class="form-label">Username<span class="text-danger">*</span></label>
+            <input class="form-control" type="text" name="username" id="username" placeholder="Username" required>
         </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Password<span class="text-danger">*</span></label>
+            <input class="form-control" type="password" name="password" id="password" placeholder="Password" required>
+        </div>
+        <div class="mb-4">
+            <label for="confirm-password" class="form-label">Confirm Password<span class="text-danger">*</span></label>
+            <input class="form-control" type="password" name="confirm-password" id="confirm-password" placeholder="Confirm Password" required>
+            <small class="text-danger" id="match-pass-alert">Confirm password and password does not match!</small>
+        </div>
+        <div class="mb-5">
+            <input type="submit" class="form-control md-3 btn btn-primary" value="Register">
+        </div>
+    </form>
+    <div class="text-center">
+        <small>
+            Already have an account? <a class="text-decoration-none" href="{% url 'auth_login' %}">Sign In</a>
+        </small>
     </div>
 
 </div>
@@ -62,8 +58,10 @@
         const curr_pass = $("#confirm-password").val();
 
         if(ver_pass !== curr_pass){
+            $("#confirm-password").addClass("is-invalid");
             $("#match-pass-alert").show();
         }else{
+            $("#confirm-password").removeClass("is-invalid");
             $("#match-pass-alert").hide();
         }
     });
@@ -73,8 +71,10 @@
         const email_regex = /^[\w\-\.]+@([\w-]+\.)+[\w-]{2,}$/gm;
 
         if(email_regex.exec(email)){
+            $("#email").removeClass("is-invalid");
             $("#match-email-alert").hide();
         }else{
+            $("#email").addClass("is-invalid");
             $("#match-email-alert").show();
         }
     });

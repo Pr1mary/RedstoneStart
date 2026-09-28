@@ -22,14 +22,12 @@
 
     {% include 'components/navbar.html' %}
 
-    <div class="container-fluid">
-
+    <div id="mainsect" class="container-fluid">
         <div class="row">
-            <div class="col-md-3 col-lg-2 d-md-block bg-light">
+            <div class="col-2 p-0">
                 {% include 'components/sidebar.html' %}
             </div>
-    
-            <div class="col-md-9 col-lg-10 py-4">
+            <div class="col-10 content p-3">
                 {% block bodydoc %}
                 {% endblock %}
             </div>

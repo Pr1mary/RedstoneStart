@@ -173,13 +173,18 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="mb-3">
+                <!-- <div class="mb-3">
                     <label for="invite-code" class="col-form-label">Invite Code:</label>
                     <input type="text" class="form-control" id="invite-code-details" name="invite-code" disabled>    
-                </div>
+                </div> -->
                 <div class="mb-3">
                     <label for="invite-url" class="col-form-label">Invite URL:</label>
-                    <input type="text" class="form-control user-select-all" id="invite-url-details" name="invite-url" disabled>    
+                    <div class="input-group">
+                        <input type="text" class="form-control user-select-all" id="invite-url-details" name="invite-url" readonly>
+                        <button class="btn btn-outline-secondary" type="button" id="copy-link-btn" onclick="copyInviteLink()">
+                            <span class="mdi mdi-content-copy"></span>
+                        </button>    
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -419,6 +424,13 @@
         }).fail(() => {
             alert("Error: failed to generate invite code from server")
         })
+    }
+
+    function copyInviteLink() {
+        const invite_url_form = $("#invite-url-details");
+
+        invite_url_form.select();
+        navigator.clipboard.writeText(invite_url_form.val());
     }
 
     async function inviteDetail(event) {

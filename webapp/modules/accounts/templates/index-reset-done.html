@@ -1,0 +1,15 @@
+{% extends 'base_clean.html' %}
+
+{% block bodydoc %}
+
+<div class="reset-pass-container text-center">
+    
+    <h4 class="mb-3"><strong>Reset password success!</strong></h4>
+    <h5 class="mb-5">Click here to <a class="text-decoration-none" href="{% url 'auth_login' %}">Sign In</a></h5>
+    <small>
+        By RedstoneStart team
+    </small>
+
+</div>
+
+{% endblock %}

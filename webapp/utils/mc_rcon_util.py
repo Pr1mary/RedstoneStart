@@ -153,7 +153,7 @@ class MCRconUtil:
         command_str = "version"
         resp_cmd = self.__command(command_str)
 
-        if resp_cmd in ["", None, "[ERROR]"]:
+        if ("[ERROR]" in resp_cmd) or resp_cmd in ["", None]:
             return False
         
         return True

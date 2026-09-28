@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse, HttpRequest, HttpResponseRedirect
 from django.views.generic import View
 from .models import PlayerList, PlayerServerMap, ServerList
+from django.core.paginator import Paginator
 from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
@@ -21,14 +22,24 @@ class PlayerManagerView(LoginRequiredMixin, View):
 
     def get(self, request: HttpRequest, *args, **kwargs):
 
-        server_id = request.GET.get("server_id", None)
         username_target = request.GET.get("username", None)
         user_status = request.GET.get("status", None)
         curr_user = request.user
+
         try:
-            server_id = int(server_id)
+            server_id = int(request.GET.get("server_id", None))
         except:
             server_id = None
+
+        try:
+            page_qy = int(request.GET.get("page", 1))
+        except:
+            page_qy = 1
+
+        try:
+            size_qy = int(request.GET.get("size", 10))
+        except:
+            size_qy = 10
 
         curr_server_id = None
         server_list_parsed = []
@@ -57,7 +68,9 @@ class PlayerManagerView(LoginRequiredMixin, View):
             player_map_list = player_map_list.filter(banned_status=False, is_synced=True)
         
         player_server_detail_list = []
-        for player in player_map_list:
+        player_map_pages = Paginator(player_map_list, size_qy)
+        curr_player_map_page = player_map_pages.page(page_qy)
+        for player in curr_player_map_page.object_list:
 
             status_name = "ONLINE" if player.online_status else "OFFLINE"
             status_name = "BANNED" if player.banned_status else status_name
@@ -72,6 +85,15 @@ class PlayerManagerView(LoginRequiredMixin, View):
             }
             player_server_detail_list.append(player_detail)
 
+        self.ctx["page_details"] = {
+            "curr_page": page_qy,
+            "next_page": page_qy + 1,
+            "prev_page": page_qy - 1,
+            "curr_size": size_qy,
+            "range": player_map_pages.page_range,
+            "has_next": curr_player_map_page.has_next,
+            "has_prev": curr_player_map_page.has_previous
+        }
         self.ctx["server_list"] = server_list_parsed
         self.ctx["curr_server_id"] = curr_server_id
         self.ctx["curr_username_target"] = username_target if username_target else ""
@@ -168,10 +190,19 @@ class PlayerJoinManagerView(View):
 
         req_data = request.GET
 
-        self.ctx["invite_code"] = req_data.get("invitecode")
+        invite_code = req_data.get("invitecode")
+        server_list = ServerList.objects.filter(server_invite_code=invite_code)
+        server_name = None
+
+        if server_list is None or len(server_list) == 0:
+            invite_code = None
+        else:
+            server_name = server_list.first().server_name
+
+        self.ctx["invite_code"] = invite_code
+        self.ctx["server_name"] = server_name
 
         return render(request, self.template, self.ctx)
-
     
     def post(self, request: HttpRequest, *args, **kwargs):
 
@@ -214,11 +245,22 @@ class PlayerJoinManagerView(View):
             player_handler = PlayerHandler()
             player_handler.add_whitelist_player(player_server_map.pk)
 
+            return redirect("player_join_server_success")
+
         except Exception as err:
             print(f"Error when storing server: {err.args}")
+            return redirect("player_join_server")
 
-        return redirect("player_join_server")
-    
+class PlayerJoinManagerSuccessView(View):
+    template = "modules/player_list/templates/index_player_success.html"
+    ctx = {
+        "page_title": "player_invite_success"
+    }
+
+    def get(self, request: HttpRequest, *args, **kwargs):
+
+        return render(request, self.template, self.ctx)
+     
 class PlayerManagerDetailView(View):
 
     def get(self, request: HttpRequest, *args, **kwargs):
