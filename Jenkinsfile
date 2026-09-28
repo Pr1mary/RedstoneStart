@@ -104,19 +104,26 @@ pipeline {
                     withCredentials([
                         string(credentialsId: 'DB_REDSTONE_USER', variable: 'DB_USER'),
                         string(credentialsId: 'DB_REDSTONE_PASS', variable: 'DB_PASSWORD'),
-                        string(credentialsId: 'DJANGO_SECRET', variable: 'DJANGO_SECRET')
+                        string(credentialsId: 'DJANGO_SECRET', variable: 'DJANGO_SECRET'),
+                        string(credentialsId: 'EMAIL_HOST_PASSWORD_REDSTONESTART', variable: 'EMAIL_HOST_PASSWORD'),
+                        string(credentialsId: 'EMAIL_HOST_USER_REDSTONESTART', variable: 'EMAIL_HOST_USER'),
                     ]){
-                        if (!DB_USER || !DB_PASSWORD || !CSRF_TRUSTED_ORIGINS_LIST || !DJANGO_SECRET) {
+                        if (!DB_USER || !DB_PASSWORD || !CSRF_TRUSTED_ORIGINS_LIST || !DJANGO_SECRET
+                        || !EMAIL_HOST_PASSWORD || !EMAIL_HOST_USER) {
                             error "Missing credentials for running the application!"
                         }
                         
-                        withEnv(["DB_USER='${DB_USER}'", "DB_PASSWORD='${DB_PASSWORD}'", "DJANGO_SECRET='${DJANGO_SECRET}'", "DB_HOST='${DB_HOST}'", "DB_PORT='${DB_PORT}'"]) {
+                        withEnv(["DB_USER='${DB_USER}'", "DB_PASSWORD='${DB_PASSWORD}'", "DJANGO_SECRET='${DJANGO_SECRET}'", "DB_HOST='${DB_HOST}'",
+                        "DB_PORT='${DB_PORT}'", "EMAIL_HOST_PASSWORD='${EMAIL_HOST_PASSWORD}'", "EMAIL_HOST_USER='${EMAIL_HOST_USER}'"]) {
                             sh """
                                 docker run -p ${TARGET_PORT}:8000 \
                                 --name "${CONTAINER_NAME}" -e DB_USER=${DB_USER} -e APP_URL=${APP_URL} \
                                 -e CSRF_TRUSTED_ORIGINS_LIST=${CSRF_TRUSTED_ORIGINS_LIST} -e ALLOWED_HOST_LIST=${ALLOWED_HOST_LIST} \
                                 -e DB_PASSWORD=${DB_PASSWORD} -e DB_HOST=${DB_HOST} \
                                 -e DJANGO_SECRET=${DJANGO_SECRET} -e DB_PORT=${DB_PORT} \
+                                -e EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD} -e EMAIL_HOST_USER=${EMAIL_HOST_USER}
+                                -e EMAIL_FROM=${EMAIL_FROM} -e EMAIL_HOST=${EMAIL_HOST} \
+                                -e EMAIL_PORT=${EMAIL_PORT} -e EMAIL_USE_TLS=${EMAIL_USE_TLS} \
                                 --restart=${RESTART_POLICY} -d ${DOCKER_IMAGE}:${DOCKER_TAG}
                             """
                         }
